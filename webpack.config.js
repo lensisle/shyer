@@ -1,16 +1,17 @@
-const path = require('path');
+const path = require("path");
 
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const copyHTMLTemplate = new HtmlWebpackPlugin({
   template: "template/index.html"
 });
 
+const copyStatic = new CopyWebpackPlugin([{ from: "assets" }]);
+
 const config = {
   entry: {
-    "app": [
-      "./src/vuni.js"
-    ],
+    app: ["babel-polyfill", "./src/vuni.js"]
   },
   output: {
     filename: "vuni.js",
@@ -23,7 +24,7 @@ const config = {
     contentBase: path.join(__dirname, "build"),
     compress: true,
     open: true,
-    hot: false,
+    hot: false
   },
   module: {
     rules: [
@@ -32,20 +33,16 @@ const config = {
           {
             loader: "babel-loader",
             options: {
-              presets: [
-                "env"
-              ],
+              presets: ["env"],
               plugins: [
-                require('babel-plugin-transform-object-rest-spread'), 
-                require('babel-plugin-transform-class-properties'),
-              ],
+                require("babel-plugin-transform-object-rest-spread"),
+                require("babel-plugin-transform-class-properties")
+              ]
             }
-          },
+          }
         ],
         test: /\.jsx?$/,
-        exclude: [
-          path.resolve(__dirname, "node_modules"),
-        ]
+        exclude: [path.resolve(__dirname, "node_modules")]
       },
       {
         test: /\.(jpe?g|png|gif|svg)$/,
@@ -59,9 +56,7 @@ const config = {
       }
     ]
   },
-  plugins: [
-    copyHTMLTemplate
-  ]
+  plugins: [copyHTMLTemplate, copyStatic]
 };
 
 module.exports = config;
