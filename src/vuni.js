@@ -1,8 +1,10 @@
 const Emmiter = {
   emit: function(events, evt, data) {
     events[evt].subscribers.forEach(sub => sub(data));
-  }
+  },
 };
+
+const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
 
 const Vuni = {
   createGame: function(width, height) {
@@ -12,8 +14,6 @@ const Vuni = {
     canvas['height'] = height;
     document.body.appendChild(canvas);
     const ctx = canvas.getContext`2d`;
-    ctx.fillStyle = this.clearColor;
-    ctx.fillRect(0, 0, width, height);
     this.cache = { image: {}, audio: {}, default: new Image() };
     this.events = {};
     ['update', 'keypress', 'keyrelease', 'onloaded'].forEach(
@@ -27,12 +27,12 @@ const Vuni = {
         const et = this.scene.entities[ek];
         if (!et.visible) return;
         ctx.save();
-        ctx.translate(0, 0);
         const img = this.cache.image[et.resId] || this.cache.default;
         ctx.drawImage(img, et.x, et.y, et.w, et.h);
         ctx.restore();
       });
     };
+    render();
     let lastFrameTime = 0;
     this.gameLoop = function(ts = 0) {
       const now = Date.now();
@@ -47,42 +47,35 @@ const Vuni = {
     canvas.tabIndex = 1000;
     canvas.style.outline = 'none';
     const onInput = value => (evt = window.event) => {
-      this.input[evt.keyCode] = value;
+      const { keyCode } = evt;
+      const key =
+        keyCode === 37
+          ? 'left'
+          : keyCode === 38
+            ? 'up'
+            : keyCode === 39 ? 'right' : keyCode === 40 ? 'down' : '';
+      this.input[key] = value;
     };
     canvas.onkeydown = onInput(true);
     canvas.onkeyup = onInput(false);
     return this;
   },
-  input: {
-    ['37']: false,
-    ['38']: false,
-    ['39']: false,
-    ['40']: false,
-    left: function() {
-      return this[37];
-    },
-    right: function() {
-      return this[39];
-    },
-    up: function() {
-      return this[38];
-    },
-    down: function() {
-      return this[40];
-    }
-  },
+  input: { up: false, down: false, left: false, right: false },
   clearColor: '#D90368',
   scene: {
     entitiesKeys: [],
     entities: {},
-    registerSprite: function({ resId, id, x, y, w, h, speed, visible }) {
-      this.entitiesKeys.push(id);
-      this.entities[id] = { resId, x, y, w, h, speed, visible };
+    registerSprites: function() {
+      const sprites = Array.prototype.slice.call(arguments, 0);
+      sprites.forEach(({ resId, id, x, y, w, h, speed, visible }) => {
+        this.entitiesKeys.push(id);
+        this.entities[id] = { resId, x, y, w, h, speed, visible };
+      });
     },
     clear: () => {
       this.entitiesKeys.length = 0;
       this.entities = {};
-    }
+    },
   },
   on: function(event, callback) {
     if (this.events[event]) this.events[event].subscribers.push(callback);
@@ -101,15 +94,15 @@ const Vuni = {
       Emmiter.emit(this.events, 'onloaded');
       this.gameLoop();
     });
-  }
+  },
 };
 
 Vuni.createGame(400, 300).load([
   {
     type: 'image',
     src: 'mother3.png',
-    id: 'mother'
-  }
+    id: 'mother',
+  },
 ]);
 
 const motherSprite = {
@@ -120,24 +113,26 @@ const motherSprite = {
   w: 144,
   h: 144,
   speed: 240,
-  visible: true
+  visible: true,
 };
 
-Vuni.scene.registerSprite(motherSprite);
+const spr2 = { ...motherSprite, id: 'b' };
+
+Vuni.scene.registerSprites(motherSprite, spr2);
 
 Vuni.on('update', dt => {
   const a = Vuni.scene.entities['a'];
 
-  if (Vuni.input.left()) {
+  if (Vuni.input.left) {
     a.x -= a.speed * dt;
   }
-  if (Vuni.input.right()) {
+  if (Vuni.input.right) {
     a.x += a.speed * dt;
   }
-  if (Vuni.input.up()) {
+  if (Vuni.input.up) {
     a.y -= a.speed * dt;
   }
-  if (Vuni.input.down()) {
+  if (Vuni.input.down) {
     a.y += a.speed * dt;
   }
 });
