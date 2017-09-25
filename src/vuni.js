@@ -1,3 +1,9 @@
+const Emmiter = {
+  emit: function(events, evt, data) {
+    events[evt].subscribers.forEach(sub => sub(data));
+  }
+};
+
 const Vuni = {
   createGame: function(width, height) {
     const canvas = document.createElement('canvas');
@@ -6,43 +12,80 @@ const Vuni = {
     canvas['height'] = height;
     document.body.appendChild(canvas);
     const ctx = canvas.getContext`2d`;
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = this.clearColor;
     ctx.fillRect(0, 0, width, height);
-    this.assets = { image: {}, audio: {} };
-    this.emmiter = {
-      events: {},
-      emit: (evt, data) =>
-        this.emmiter.events[evt].subscribers.forEach(sub => sub(data))
-    };
-    ['update', 'render', 'keypress', 'keyrelease', 'onloaded'].forEach(
-      evtKey => (this.emmiter.events[evtKey] = { subscribers: [] })
+    this.cache = { image: {}, audio: {}, default: new Image() };
+    this.events = {};
+    ['update', 'keypress', 'keyrelease', 'onloaded'].forEach(
+      evtKey => (this.events[evtKey] = { subscribers: [] })
     );
     this.on = this.on.bind(this);
+    const render = () => {
+      ctx.fillStyle = this.clearColor;
+      ctx.fillRect(0, 0, width, height);
+      this.scene.entitiesKeys.forEach(ek => {
+        const et = this.scene.entities[ek];
+        if (!et.visible) return;
+        ctx.save();
+        ctx.translate(0, 0);
+        const img = this.cache.image[et.resId] || this.cache.default;
+        ctx.drawImage(img, et.x, et.y, et.w, et.h);
+        ctx.restore();
+      });
+    };
     let lastFrameTime = 0;
-    this.gameLoop = (ts = 0) => {
-      if (ts < lastFrameTime + 33.3) {
-        requestAnimationFrame(this.gameLoop);
-        return;
-      }
-      const dt = ts - lastFrameTime;
-      lastFrameTime = ts;
-      this.emmiter.emit('update', dt);
-      this.emmiter.emit('render');
+    this.gameLoop = function(ts = 0) {
+      const now = Date.now();
+      this.gameLoop.dt = (now - lastFrameTime) / 1000.0;
+      Emmiter.emit(this.events, 'update', this.gameLoop.dt);
+      render();
+      lastFrameTime = now;
       requestAnimationFrame(this.gameLoop);
     };
+    this.gameLoop = this.gameLoop.bind(this);
+    this.gameLoop.dt = 0;
     canvas.tabIndex = 1000;
     canvas.style.outline = 'none';
-    const keyEvent = evtName => (evt = window.event) => {
-      evt.preventDefault();
-      this.emmiter.emit(evtName, evt.keyCode || 0);
+    const onInput = value => (evt = window.event) => {
+      this.input[evt.keyCode] = value;
     };
-    canvas.onkeydown = keyEvent('keypress');
-    canvas.onkeyup = keyEvent('keyrelease');
+    canvas.onkeydown = onInput(true);
+    canvas.onkeyup = onInput(false);
     return this;
   },
+  input: {
+    ['37']: false,
+    ['38']: false,
+    ['39']: false,
+    ['40']: false,
+    left: function() {
+      return this[37];
+    },
+    right: function() {
+      return this[39];
+    },
+    up: function() {
+      return this[38];
+    },
+    down: function() {
+      return this[40];
+    }
+  },
+  clearColor: '#D90368',
+  scene: {
+    entitiesKeys: [],
+    entities: {},
+    registerSprite: function({ resId, id, x, y, w, h, speed, visible }) {
+      this.entitiesKeys.push(id);
+      this.entities[id] = { resId, x, y, w, h, speed, visible };
+    },
+    clear: () => {
+      this.entitiesKeys.length = 0;
+      this.entities = {};
+    }
+  },
   on: function(event, callback) {
-    if (this.emmiter.events[event])
-      this.emmiter.events[event].subscribers.push(callback);
+    if (this.events[event]) this.events[event].subscribers.push(callback);
   },
   load: function(assets) {
     const loader = assets.map(assetDef => {
@@ -51,30 +94,52 @@ const Vuni = {
         asset.onerror = rej;
         asset[assetDef.type === 'image' ? 'onload' : 'oncanplaythrough'] = res;
         asset.src = assetDef.src;
-        this.assets[assetDef.type][assetDef.id] = asset;
+        this.cache[assetDef.type][assetDef.id] = asset;
       });
     });
     Promise.all(loader).then(_ => {
-      this.emmiter.emit('onloaded');
+      Emmiter.emit(this.events, 'onloaded');
       this.gameLoop();
     });
   }
 };
 
-// Tests ->
-
 Vuni.createGame(400, 300).load([
-  { id: 'mother', type: 'image', src: 'mother3.png' },
-  { id: 'mother2', type: 'image', src: 'mother3.png' }
+  {
+    type: 'image',
+    src: 'mother3.png',
+    id: 'mother'
+  }
 ]);
 
-Vuni.on('onloaded', () => {
-  console.log('Resources loaded');
-  console.log(Vuni.assets);
-});
+const motherSprite = {
+  resId: 'mother',
+  id: 'a',
+  x: 0,
+  y: 0,
+  w: 144,
+  h: 144,
+  speed: 240,
+  visible: true
+};
 
-Vuni.on('keyrelease', keycode => {
-  console.log(keycode);
+Vuni.scene.registerSprite(motherSprite);
+
+Vuni.on('update', dt => {
+  const a = Vuni.scene.entities['a'];
+
+  if (Vuni.input.left()) {
+    a.x -= a.speed * dt;
+  }
+  if (Vuni.input.right()) {
+    a.x += a.speed * dt;
+  }
+  if (Vuni.input.up()) {
+    a.y -= a.speed * dt;
+  }
+  if (Vuni.input.down()) {
+    a.y += a.speed * dt;
+  }
 });
 
 export default Vuni;
