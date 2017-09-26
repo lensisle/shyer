@@ -34,12 +34,12 @@ const camera = {
     this.v.x = clamp(this.v.x, this.w.x - dzx, this.w.x + this.w.w - dzx);
     this.v.y = clamp(this.v.y, this.w.y - dzy, this.w.y + this.w.h - dzy);
   },
-  contains: function({ x, y }) {
+  contains: function({ x, y, w, h }) {
     return (
-      x >= this.v.x &&
-      x <= this.v.x + this.v.w &&
-      y >= this.v.y &&
-      y <= this.v.y + this.v.h
+      x - this.v.x + w / 2.0 >= 0 &&
+      x - this.v.x - w / 2.0 <= this.v.w &&
+      y - this.v.y + h / 2.0 >= 0 &&
+      y - this.v.y - h / 2.0 <= this.v.h
     );
   }
 };
@@ -52,31 +52,31 @@ const Vuni = {
     canvas['height'] = height;
     document.body.appendChild(canvas);
     const ctx = canvas.getContext`2d`;
+    ctx.fillStyle = this.clearColor;
     this.cache = { image: {}, audio: {}, default: new Image() };
     this.events = {};
     ['update', 'loadcomplete'].forEach(
       evtKey => (this.events[evtKey] = { subscribers: [] })
     );
     this.on = this.on.bind(this);
-    this.camera = { ...camera };
+    this.camera = Object.assign({}, camera);
     this.camera.setViewportRect(0, 0, width, height);
     this.camera.setWorldRect(0, 0, width, width);
     const update = () => {
-      for (let i = 0; i < this.scene.entitiesKeys.length; i++) {
+      for (let i = 0, max = this.scene.entitiesKeys.length; i < max; i++) {
         const ek = this.scene.entitiesKeys[i];
         const et = this.scene.entities[ek];
-        if (!et.visible) return;
+        if (!et.visible) continue;
         if (this.camera.target && ek === this.camera.target)
           this.camera.follow(et, width / 2.0, height / 2.0);
       }
     };
     const render = () => {
-      ctx.fillStyle = this.clearColor;
       ctx.fillRect(0, 0, width, height);
-      for (let i = 0; i < this.scene.entitiesKeys.length; i++) {
+      for (let i = 0, max = this.scene.entitiesKeys.length; i < max; i++) {
         const ek = this.scene.entitiesKeys[i];
         const et = this.scene.entities[ek];
-        if (!et.visible && !this.camera.contains(et)) return;
+        if (!et.visible || !this.camera.contains(et)) continue;
         if (this.camera.target && ek === this.camera.target) ctx.save();
         const img = this.cache.image[et.resId] || this.cache.default;
         ctx.drawImage(
@@ -155,10 +155,10 @@ const Vuni = {
   }
 };
 
-Vuni.createGame(400, 300).load([
+Vuni.createGame(800, 600).load([
   {
     type: 'image',
-    src: 'mother3.png',
+    src: 'floor.png',
     id: 'mother'
   },
   {
@@ -191,13 +191,16 @@ const knight = {
 
 Vuni.on('loadcomplete', () => {
   Vuni.scene.registerSprites(knight);
-  for (let i = 0; i < 200; i++) {
-    Vuni.scene.registerSprites({
-      ...motherSprite,
-      id: `${i}`,
-      x: Math.random() * 5000,
-      y: Math.random() * 5000
-    });
+  for (let i = 0; i < 10000; i++) {
+    Vuni.scene.registerSprites(
+      Object.assign(
+        {},
+        motherSprite,
+        { id: `${i}` },
+        { x: Math.random() * 5000 },
+        { y: Math.random() * 5000 }
+      )
+    );
   }
   Vuni.camera.target = 'knight';
   Vuni.camera.setWorldRect(0, 0, 5000, 5000);
@@ -219,5 +222,3 @@ Vuni.on('update', dt => {
     a.y += a.speed * dt;
   }
 });
-
-export default Vuni;
