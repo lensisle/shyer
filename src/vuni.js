@@ -47,7 +47,7 @@ const camera = {
 const Vuni = {
   createGame: function(width, height) {
     const canvas = document.createElement('canvas');
-    canvas['id'] = 'vuniroot';
+    canvas['id'] = 'vuni-root';
     canvas['width'] = width;
     canvas['height'] = height;
     document.body.appendChild(canvas);
@@ -61,14 +61,21 @@ const Vuni = {
     this.camera = { ...camera };
     this.camera.setViewportRect(0, 0, width, height);
     this.camera.setWorldRect(0, 0, width, width);
+    const update = () => {
+      this.scene.entitiesKeys.forEach(ek => {
+        const et = this.scene.entities[ek];
+        if (!et.visible) return;
+        if (this.camera.target && ek === this.camera.target)
+          this.camera.follow(et, width / 2.0, height / 2.0);
+        et.update();
+      });
+    };
     const render = () => {
       ctx.fillStyle = this.clearColor;
       ctx.fillRect(0, 0, width, height);
       this.scene.entitiesKeys.forEach(ek => {
         const et = this.scene.entities[ek];
         if (!et.visible && !this.camera.contains(et)) return;
-        if (this.camera.target && ek === this.camera.target)
-          this.camera.follow(et, width / 2.0, height / 2.0);
         ctx.save();
         const img = this.cache.image[et.resId] || this.cache.default;
         ctx.drawImage(
@@ -87,6 +94,7 @@ const Vuni = {
       const now = Date.now();
       this.gameLoop.dt = (now - lastFrameTime) / 1000.0;
       Emmiter.emit(this.events, 'update', this.gameLoop.dt);
+      update();
       render();
       lastFrameTime = now;
       requestAnimationFrame(this.gameLoop);
