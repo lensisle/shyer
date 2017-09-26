@@ -62,21 +62,22 @@ const Vuni = {
     this.camera.setViewportRect(0, 0, width, height);
     this.camera.setWorldRect(0, 0, width, width);
     const update = () => {
-      this.scene.entitiesKeys.forEach(ek => {
+      for (let i = 0; i < this.scene.entitiesKeys.length; i++) {
+        const ek = this.scene.entitiesKeys[i];
         const et = this.scene.entities[ek];
         if (!et.visible) return;
         if (this.camera.target && ek === this.camera.target)
           this.camera.follow(et, width / 2.0, height / 2.0);
-        et.update();
-      });
+      }
     };
     const render = () => {
       ctx.fillStyle = this.clearColor;
       ctx.fillRect(0, 0, width, height);
-      this.scene.entitiesKeys.forEach(ek => {
+      for (let i = 0; i < this.scene.entitiesKeys.length; i++) {
+        const ek = this.scene.entitiesKeys[i];
         const et = this.scene.entities[ek];
         if (!et.visible && !this.camera.contains(et)) return;
-        ctx.save();
+        if (this.camera.target && ek === this.camera.target) ctx.save();
         const img = this.cache.image[et.resId] || this.cache.default;
         ctx.drawImage(
           img,
@@ -85,8 +86,8 @@ const Vuni = {
           et.w,
           et.h
         );
-        ctx.restore();
-      });
+        if (this.camera.target && ek === this.camera.target) ctx.restore();
+      }
     };
     render();
     let lastFrameTime = 0;
@@ -159,29 +160,51 @@ Vuni.createGame(400, 300).load([
     type: 'image',
     src: 'mother3.png',
     id: 'mother'
+  },
+  {
+    type: 'image',
+    src: 'knight.png',
+    id: 'knight'
   }
 ]);
 
 const motherSprite = {
   resId: 'mother',
-  id: 'a',
   x: 0,
   y: 0,
   w: 144,
   h: 144,
+  speed: 0,
+  visible: true
+};
+
+const knight = {
+  id: 'knight',
+  resId: 'knight',
+  x: 0,
+  y: 0,
+  w: 64,
+  h: 64,
   speed: 240,
   visible: true
 };
 
-const spr2 = { ...motherSprite, id: 'b', x: 50, y: 50 };
-
 Vuni.on('loadcomplete', () => {
-  Vuni.scene.registerSprites(motherSprite, spr2);
-  Vuni.camera.target = 'a';
+  Vuni.scene.registerSprites(knight);
+  for (let i = 0; i < 200; i++) {
+    Vuni.scene.registerSprites({
+      ...motherSprite,
+      id: `${i}`,
+      x: Math.random() * 5000,
+      y: Math.random() * 5000
+    });
+  }
+  Vuni.camera.target = 'knight';
+  Vuni.camera.setWorldRect(0, 0, 5000, 5000);
 });
 
 Vuni.on('update', dt => {
-  const a = Vuni.scene.entities['a'];
+  const a = Vuni.scene.entities['knight'];
 
   if (Vuni.input.left) {
     a.x -= a.speed * dt;
