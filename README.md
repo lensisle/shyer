@@ -11,7 +11,7 @@ Current Features:
   - Input
   - Asset Loading
 
-Future Features:
+Upcoming Features:
   - Animated Sprites
   - Mouse Input
   - Tilemaps
