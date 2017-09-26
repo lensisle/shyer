@@ -14,6 +14,7 @@ Current Features:
 Upcoming Features:
   - Animated Sprites
   - Mouse Input
+  - Layers
   - Tilemaps
   - Audio Playback / Events
   - Npm module setup 
