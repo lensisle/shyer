@@ -1,7 +1,7 @@
 {
   "name": "vunijs",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "0.0.1",
+  "main": "vuni.js",
   "license": "MIT",
   "scripts": {
     "start:dev": "webpack-dev-server",
