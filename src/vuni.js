@@ -7,61 +7,55 @@ const Emmiter = {
 const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
 
 const camera = {
-  target: '',
-  v: { x: 0, y: 0, w: 0, h: 0 },
-  w: { x: 0, y: 0, w: 0, h: 0 },
-  setViewportRect: function(x, y, w, h) {
-    this.v.x = x;
-    this.v.y = y;
-    this.v.w = w;
-    this.v.h = h;
-  },
-  setWorldRect: function(x, y, w, h) {
-    this.w.x = x;
-    this.w.y = y;
-    this.w.w = w;
-    this.w.h = h;
+  target: "",
+  mtx: [{ x: 0, y: 0, w: 0, h: 0 }, { x: 0, y: 0, w: 0, h: 0 }],
+  setRectCoords: function(t, x, y, w, h) {
+    const i = t === "viewport" ? 0 : t === "world" ? 1 : -1;
+    this.mtx[clamp(i, 0, 1)] =
+      i === 0 || i === 1 ? { ...{ x, y, w, h } } : this.mtx[clamp(i, 0, 1)];
   },
   follow: function({ x, y }, dzx, dzy) {
-    this.v.x =
-      x - this.v.x + dzx > this.v.w
-        ? x - (this.v.w - dzx)
-        : x - dzx < this.v.x ? x - dzx : this.v.x;
-    this.v.y =
-      y - this.v.y + dzy > this.v.h
-        ? y - (this.v.h - dzy)
-        : y - dzy < this.v.y ? y - dzy : this.v.y;
-    this.v.x = clamp(this.v.x, this.w.x - dzx, this.w.x + this.w.w - dzx);
-    this.v.y = clamp(this.v.y, this.w.y - dzy, this.w.y + this.w.h - dzy);
+    const vm = this.mtx[0],
+      wm = this.mtx[1];
+    const vx =
+      x - vm.x + dzx > vm.w
+        ? x - (vm.w - dzx)
+        : x - dzx < vm.x ? x - dzx : vm.x;
+    const vy =
+      y - vm.y + dzy > vm.h
+        ? y - (vm.h - dzy)
+        : y - dzy < vm.y ? y - dzy : vm.y;
+    this.mtx[0].x = clamp(vx, wm.x - dzx, wm.x + wm.w - dzx);
+    this.mtx[0].y = clamp(vy, wm.y - dzy, wm.y + wm.h - dzy);
   },
   contains: function({ x, y, w, h }) {
     return (
-      x - this.v.x + w / 2.0 >= 0 &&
-      x - this.v.x - w / 2.0 <= this.v.w &&
-      y - this.v.y + h / 2.0 >= 0 &&
-      y - this.v.y - h / 2.0 <= this.v.h
+      x - this.mtx[0].x + w / 2.0 >= 0 &&
+      x - this.mtx[0].x - w / 2.0 <= this.mtx[0].w &&
+      y - this.mtx[0].y + h / 2.0 >= 0 &&
+      y - this.mtx[0].y - h / 2.0 <= this.mtx[0].h
     );
   }
 };
 
 const Vuni = {
   createGame: function(width, height) {
-    const canvas = document.createElement('canvas');
-    canvas['id'] = 'vuni-root';
-    canvas['width'] = width;
-    canvas['height'] = height;
+    const canvas = document.createElement("canvas");
+    canvas["id"] = "vuni-root";
+    canvas["width"] = width;
+    canvas["height"] = height;
     document.body.appendChild(canvas);
     const ctx = canvas.getContext`2d`;
     ctx.fillStyle = this.clearColor;
     this.cache = { image: {}, audio: {}, default: new Image() };
     this.events = {};
-    ['update', 'loadcomplete'].forEach(
+    ["update", "loadcomplete"].forEach(
       evtKey => (this.events[evtKey] = { subscribers: [] })
     );
     this.on = this.on.bind(this);
     this.camera = Object.assign({}, camera);
-    this.camera.setViewportRect(0, 0, width, height);
-    this.camera.setWorldRect(0, 0, width, width);
+    this.camera.setRectCoords("viewport", 0, 0, width, height);
+    this.camera.setRectCoords("world", 0, 0, width, width);
     const update = () => {
       for (let i = 0, max = this.scene.entitiesKeys.length; i < max; i++) {
         const ek = this.scene.entitiesKeys[i];
@@ -81,8 +75,8 @@ const Vuni = {
         const img = this.cache.image[et.resId] || this.cache.default;
         ctx.drawImage(
           img,
-          et.x - et.w / 2 - this.camera.v.x,
-          et.y - et.h / 2 - this.camera.v.y,
+          et.x - et.w / 2 - this.camera.mtx[0].x,
+          et.y - et.h / 2 - this.camera.mtx[0].y,
           et.w,
           et.h
         );
@@ -94,7 +88,7 @@ const Vuni = {
     this.gameLoop = function() {
       const now = Date.now();
       this.gameLoop.dt = (now - lastFrameTime) / 1000.0;
-      Emmiter.emit(this.events, 'update', this.gameLoop.dt);
+      Emmiter.emit(this.events, "update", this.gameLoop.dt);
       update();
       render();
       lastFrameTime = now;
@@ -103,15 +97,15 @@ const Vuni = {
     this.gameLoop = this.gameLoop.bind(this);
     this.gameLoop.dt = 0;
     canvas.tabIndex = 1000;
-    canvas.style.outline = 'none';
+    canvas.style.outline = "none";
     const onInput = value => (evt = window.event) => {
       const { keyCode } = evt;
       const key =
         keyCode === 37
-          ? 'left'
+          ? "left"
           : keyCode === 38
-            ? 'up'
-            : keyCode === 39 ? 'right' : keyCode === 40 ? 'down' : '';
+            ? "up"
+            : keyCode === 39 ? "right" : keyCode === 40 ? "down" : "";
       this.input[key] = value;
     };
     canvas.onkeydown = onInput(true);
@@ -119,7 +113,7 @@ const Vuni = {
     return this;
   },
   input: { up: false, down: false, left: false, right: false },
-  clearColor: '#D90368',
+  clearColor: "#D90368",
   scene: {
     entitiesKeys: [],
     entities: {},
@@ -141,15 +135,15 @@ const Vuni = {
   load: function(assets) {
     const loader = assets.map(assetDef => {
       return new Promise((res, rej) => {
-        const asset = assetDef.type === 'image' ? new Image() : new Audio();
+        const asset = assetDef.type === "image" ? new Image() : new Audio();
         asset.onerror = rej;
-        asset[assetDef.type === 'image' ? 'onload' : 'oncanplaythrough'] = res;
+        asset[assetDef.type === "image" ? "onload" : "oncanplaythrough"] = res;
         asset.src = assetDef.src;
         this.cache[assetDef.type][assetDef.id] = asset;
       });
     });
     Promise.all(loader).then(_ => {
-      Emmiter.emit(this.events, 'loadcomplete');
+      Emmiter.emit(this.events, "loadcomplete");
       this.gameLoop();
     });
   }
@@ -157,19 +151,19 @@ const Vuni = {
 
 Vuni.createGame(800, 600).load([
   {
-    type: 'image',
-    src: 'floor.png',
-    id: 'mother'
+    type: "image",
+    src: "floor.png",
+    id: "mother"
   },
   {
-    type: 'image',
-    src: 'knight.png',
-    id: 'knight'
+    type: "image",
+    src: "knight.png",
+    id: "knight"
   }
 ]);
 
 const motherSprite = {
-  resId: 'mother',
+  resId: "mother",
   x: 0,
   y: 0,
   w: 144,
@@ -179,8 +173,8 @@ const motherSprite = {
 };
 
 const knight = {
-  id: 'knight',
-  resId: 'knight',
+  id: "knight",
+  resId: "knight",
   x: 0,
   y: 0,
   w: 64,
@@ -189,7 +183,7 @@ const knight = {
   visible: true
 };
 
-Vuni.on('loadcomplete', () => {
+Vuni.on("loadcomplete", () => {
   Vuni.scene.registerSprites(knight);
   for (let i = 0; i < 10000; i++) {
     Vuni.scene.registerSprites(
@@ -202,12 +196,12 @@ Vuni.on('loadcomplete', () => {
       )
     );
   }
-  Vuni.camera.target = 'knight';
-  Vuni.camera.setWorldRect(0, 0, 5000, 5000);
+  Vuni.camera.target = "knight";
+  Vuni.camera.setRectCoords(0, 0, 5000, 5000);
 });
 
-Vuni.on('update', dt => {
-  const a = Vuni.scene.entities['knight'];
+Vuni.on("update", dt => {
+  const a = Vuni.scene.entities["knight"];
 
   if (Vuni.input.left) {
     a.x -= a.speed * dt;
