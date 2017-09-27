@@ -14,9 +14,9 @@ Current Features:
 
 Upcoming Features:
   - Mouse Input
-  - Layers
-  - Object Pools
-  - Tilemaps
+  - Layers (?)
+  - Object Pools (?)
+  - Tilemaps (?)
   - Audio Playback / Events
   - Npm module setup 
   - WebGL Rendering (?)
