@@ -10,9 +10,9 @@ Current Features:
   - Events
   - Input
   - Asset Loading
+  - Animated Sprites
 
 Upcoming Features:
-  - Animated Sprites
   - Mouse Input
   - Layers
   - Object Pools
