@@ -12,7 +12,9 @@ const camera = {
   setRectCoords: function(t, x, y, w, h) {
     const i = t === "viewport" ? 0 : t === "world" ? 1 : -1;
     this.mtx[clamp(i, 0, 1)] =
-      i === 0 || i === 1 ? { ...{ x, y, w, h } } : this.mtx[clamp(i, 0, 1)];
+      i === 0 || i === 1
+        ? Object.assign({}, { x, y, w, h })
+        : this.mtx[clamp(i, 0, 1)];
   },
   follow: function({ x, y }, dzx, dzy) {
     const vm = this.mtx[0],
@@ -38,6 +40,56 @@ const camera = {
   }
 };
 
+const updateSpr = function(dt) {
+  if (!this.animations) return;
+  if (!this.animations[this.animations.current]) return;
+  const anim = this.animations[this.animations.current];
+  anim.t += dt * this.speed;
+  if (anim.t > anim.duration) {
+    anim.t = 0;
+    anim.idx += 1;
+    if (
+      anim.idx + anim.origin >=
+      Math.min(anim.origin + anim.length, this.animations.r * this.animations.c)
+    ) {
+      anim.idx = 0;
+    }
+  }
+};
+
+const renderSpr = function(camera, cache, ctx) {
+  ctx.save();
+  const a = this.animations
+    ? this.animations[this.animations.current]
+    : undefined;
+  if (this.animations && this.animations[this.animations.current]) {
+    const sx = (a.idx + a.origin % this.animations.c) * a.size;
+    const sy =
+      (Math.floor(a.idx + a.origin / this.animations.c) % this.animations.r) *
+      a.size;
+    ctx.drawImage(
+      cache.image[this.resId] || cache.default,
+      sx,
+      sy,
+      a.size,
+      a.size,
+      this.x - this.w / 2 - camera.mtx[0].x,
+      this.y - this.h / 2 - camera.mtx[0].y,
+      this.w,
+      this.h
+    );
+  } else {
+    ctx.drawImage(
+      cache.image[this.resId] || cache.default,
+      this.x - this.w / 2 - camera.mtx[0].x,
+      this.y - this.h / 2 - camera.mtx[0].y,
+      this.w,
+      this.h
+    );
+  }
+  ctx.restore();
+};
+
 const Vuni = {
   createGame: function(width, height) {
     const canvas = document.createElement("canvas");
@@ -56,13 +108,14 @@ const Vuni = {
     this.camera = Object.assign({}, camera);
     this.camera.setRectCoords("viewport", 0, 0, width, height);
     this.camera.setRectCoords("world", 0, 0, width, width);
-    const update = () => {
+    const update = dt => {
       for (let i = 0, max = this.scene.entitiesKeys.length; i < max; i++) {
         const ek = this.scene.entitiesKeys[i];
         const et = this.scene.entities[ek];
         if (!et.visible) continue;
         if (this.camera.target && ek === this.camera.target)
           this.camera.follow(et, width / 2.0, height / 2.0);
+        et.update(dt);
       }
     };
     const render = () => {
@@ -71,16 +124,7 @@ const Vuni = {
         const ek = this.scene.entitiesKeys[i];
         const et = this.scene.entities[ek];
         if (!et.visible || !this.camera.contains(et)) continue;
-        if (this.camera.target && ek === this.camera.target) ctx.save();
-        const img = this.cache.image[et.resId] || this.cache.default;
-        ctx.drawImage(
-          img,
-          et.x - et.w / 2 - this.camera.mtx[0].x,
-          et.y - et.h / 2 - this.camera.mtx[0].y,
-          et.w,
-          et.h
-        );
-        if (this.camera.target && ek === this.camera.target) ctx.restore();
+        et.render(this.camera, this.cache, ctx);
       }
     };
     render();
@@ -89,7 +133,7 @@ const Vuni = {
       const now = Date.now();
       this.gameLoop.dt = (now - lastFrameTime) / 1000.0;
       Emmiter.emit(this.events, "update", this.gameLoop.dt);
-      update();
+      update(this.gameLoop.dt);
       render();
       lastFrameTime = now;
       requestAnimationFrame(this.gameLoop);
@@ -119,10 +163,23 @@ const Vuni = {
     entities: {},
     registerSprites: function() {
       const sprites = Array.prototype.slice.call(arguments, 0);
-      sprites.forEach(({ resId, id, x, y, w, h, speed, visible }) => {
-        this.entitiesKeys.unshift(id);
-        this.entities[id] = { resId, x, y, w, h, speed, visible };
-      });
+      sprites.forEach(
+        ({ resId, id, x, y, w, h, speed, visible, animations }) => {
+          this.entitiesKeys.unshift(id);
+          this.entities[id] = {
+            resId,
+            x,
+            y,
+            w,
+            h,
+            speed,
+            visible,
+            animations,
+            update: updateSpr,
+            render: renderSpr
+          };
+        }
+      );
     },
     clear: () => {
       this.entitiesKeys.length = 0;
@@ -157,7 +214,7 @@ Vuni.createGame(800, 600).load([
   },
   {
     type: "image",
-    src: "knight.png",
+    src: "anim.png",
     id: "knight"
   }
 ]);
@@ -180,7 +237,13 @@ const knight = {
   w: 64,
   h: 64,
   speed: 240,
-  visible: true
+  visible: true,
+  animations: {
+    current: "left",
+    r: 2,
+    c: 2,
+    left: { t: 0, origin: 2, idx: 0, length: 4, duration: 30, size: 16 }
+  }
 };
 
 Vuni.on("loadcomplete", () => {
