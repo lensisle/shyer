@@ -1,274 +1,216 @@
-const Emmiter = {
-  emit: function(events, evt, data) {
-    events[evt].subscribers.forEach(sub => sub(data));
+export const ASSET_TYPE_IMAGE = 'image';
+export const ASSET_TYPE_AUDIO = 'audio';
+export const LOAD_COMPLETE_EVENT = 'loadcomplete';
+export const UPDATE_EVENT = 'update';
+export const PAUSE_EVENT = 'pause';
+
+export function createGame(width, height) {
+  let cache = {};
+  let lastFrameTime = Date.now();
+  let requestAnimationID;
+  let deltaTime = 0;
+  let entitiesKeys = [];
+  let entities = {};
+  let events = {};
+  let dependencies = [];
+  let paused = false;
+  let keys = {
+    left: false,
+    right: false,
+    up: false,
+    down: false
+  };
+
+  const clearColor = '#D90368';
+
+  const canvas = document.createElement('canvas');
+  canvas['id'] = 'vuni-root';
+  canvas['width'] = width;
+  canvas['height'] = height;
+  canvas['tabIndex'] = 1000;
+  canvas['style']['outline'] = 'none';
+
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext`2d`;
+  ctx.fillStyle = clearColor;
+
+  cache.default = new Image();
+
+  [UPDATE_EVENT, LOAD_COMPLETE_EVENT, PAUSE_EVENT].forEach(evtKey =>
+    addEvent(evtKey)
+  );
+
+  const onInput = value => (evt = window.event) => {
+    const { keyCode } = evt;
+    const key =
+      keyCode === 37
+        ? 'left'
+        : keyCode === 38
+          ? 'up'
+          : keyCode === 39 ? 'right' : keyCode === 40 ? 'down' : '';
+    keys[key] = value;
+  };
+
+  canvas.onkeydown = onInput(true);
+  canvas.onkeyup = onInput(false);
+
+  // public
+  function emit(events, eventName, data) {
+    events[eventName].subscribers.forEach(sub => sub(data));
   }
-};
 
-const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
-
-const camera = {
-  target: '',
-  mtx: [{ x: 0, y: 0, w: 0, h: 0 }, { x: 0, y: 0, w: 0, h: 0 }],
-  setRectCoords: function(t, x, y, w, h) {
-    const i = t === 'viewport' ? 0 : t === 'world' ? 1 : -1;
-    this.mtx[clamp(i, 0, 1)] =
-      i === 0 || i === 1
-        ? Object.assign({}, { x, y, w, h })
-        : this.mtx[clamp(i, 0, 1)];
-  },
-  follow: function({ x, y }, dzx, dzy) {
-    const vm = this.mtx[0],
-      wm = this.mtx[1];
-    const vx =
-      x - vm.x + dzx > vm.w
-        ? x - (vm.w - dzx)
-        : x - dzx < vm.x ? x - dzx : vm.x;
-    const vy =
-      y - vm.y + dzy > vm.h
-        ? y - (vm.h - dzy)
-        : y - dzy < vm.y ? y - dzy : vm.y;
-    this.mtx[0].x = clamp(vx, wm.x - dzx, wm.x + wm.w - dzx);
-    this.mtx[0].y = clamp(vy, wm.y - dzy, wm.y + wm.h - dzy);
-  },
-  contains: function({ x, y, w, h }) {
-    return (
-      x - this.mtx[0].x + w / 2.0 >= 0 &&
-      x - this.mtx[0].x - w / 2.0 <= this.mtx[0].w &&
-      y - this.mtx[0].y + h / 2.0 >= 0 &&
-      y - this.mtx[0].y - h / 2.0 <= this.mtx[0].h
-    );
-  }
-};
-
-const updateSpr = function(dt) {
-  if (!this.animations) return;
-  if (!this.animations[this.animations.current]) return;
-  const anim = this.animations[this.animations.current];
-  anim.time += dt * this.speed;
-  if (anim.time > anim.duration) {
-    anim.time = 0;
-    anim.idx += 1;
-    if (anim.idx > anim.origin + anim.length) {
-      anim.idx = anim.origin;
+  // public
+  function on(event, callback) {
+    if (events[event]) {
+      events[event].subscribers.push(callback);
     }
   }
-};
 
-const renderSpr = function(camera, cache, ctx) {
-  ctx.save();
-  const a = this.animations
-    ? this.animations[this.animations.current]
-    : undefined;
-  if (this.animations && this.animations[this.animations.current]) {
-    ctx.drawImage(
-      cache.image[this.resId] || cache.default,
-      (a.idx % this.animations.c) * a.size,
-      (Math.floor(a.idx / this.animations.c) % this.animations.r) * a.size,
-      a.size,
-      a.size,
-      this.x - this.w / 2 - camera.mtx[0].x,
-      this.y - this.h / 2 - camera.mtx[0].y,
-      this.w,
-      this.h
-    );
-  } else {
-    ctx.drawImage(
-      cache.image[this.resId] || cache.default,
-      this.x - this.w / 2 - camera.mtx[0].x,
-      this.y - this.h / 2 - camera.mtx[0].y,
-      this.w,
-      this.h
-    );
+  // public
+  function addEvent(name) {
+    events[name] = { subscribers: [] };
   }
-  ctx.restore();
-};
 
-const Vuni = {
-  createGame: function(width, height) {
-    const canvas = document.createElement('canvas');
-    canvas['id'] = 'vuni-root';
-    canvas['width'] = width;
-    canvas['height'] = height;
-    document.body.appendChild(canvas);
-    const ctx = canvas.getContext`2d`;
-    ctx.fillStyle = this.clearColor;
-    this.cache = { image: {}, audio: {}, default: new Image() };
-    this.events = {};
-    ['update', 'loadcomplete'].forEach(
-      evtKey => (this.events[evtKey] = { subscribers: [] })
-    );
-    this.on = this.on.bind(this);
-    this.camera = Object.assign({}, camera);
-    this.camera.setRectCoords('viewport', 0, 0, width, height);
-    this.camera.setRectCoords('world', 0, 0, width, width);
-    const update = dt => {
-      for (let i = 0, max = this.scene.entitiesKeys.length; i < max; i++) {
-        const ek = this.scene.entitiesKeys[i];
-        const et = this.scene.entities[ek];
-        if (!et.visible) continue;
-        if (this.camera.target && ek === this.camera.target)
-          this.camera.follow(et, width / 2.0, height / 2.0);
-        et.update(dt);
-      }
-    };
-    const render = () => {
-      ctx.fillRect(0, 0, width, height);
-      for (let i = 0, max = this.scene.entitiesKeys.length; i < max; i++) {
-        const ek = this.scene.entitiesKeys[i];
-        const et = this.scene.entities[ek];
-        if (!et.visible || !this.camera.contains(et)) continue;
-        et.render(this.camera, this.cache, ctx);
-      }
-    };
-    render();
-    let lastFrameTime = Date.now();
-    this.gameLoop = function() {
-      const now = Date.now();
-      this.gameLoop.dt = (now - lastFrameTime) / 1000.0;
-      Emmiter.emit(this.events, 'update', this.gameLoop.dt);
-      update(this.gameLoop.dt);
-      render();
-      lastFrameTime = now;
-      requestAnimationFrame(this.gameLoop);
-    };
-    this.gameLoop = this.gameLoop.bind(this);
-    this.gameLoop.dt = 0;
-    canvas.tabIndex = 1000;
-    canvas.style.outline = 'none';
-    const onInput = value => (evt = window.event) => {
-      const { keyCode } = evt;
-      const key =
-        keyCode === 37
-          ? 'left'
-          : keyCode === 38
-            ? 'up'
-            : keyCode === 39 ? 'right' : keyCode === 40 ? 'down' : '';
-      this.input[key] = value;
-    };
-    canvas.onkeydown = onInput(true);
-    canvas.onkeyup = onInput(false);
-    return this;
-  },
-  input: { up: false, down: false, left: false, right: false },
-  clearColor: '#D90368',
-  scene: {
-    entitiesKeys: [],
-    entities: {},
-    registerSprites: function() {
-      const sprites = Array.prototype.slice.call(arguments, 0);
-      sprites.forEach(
-        ({ resId, id, x, y, w, h, speed, visible, animations }) => {
-          this.entitiesKeys.unshift(id);
-          this.entities[id] = {
-            resId,
-            x,
-            y,
-            w,
-            h,
-            speed,
-            visible,
-            animations,
-            update: updateSpr,
-            render: renderSpr
-          };
-        }
-      );
-    },
-    clear: () => {
-      this.entitiesKeys.length = 0;
-      this.entities = {};
-    }
-  },
-  on: function(event, callback) {
-    if (this.events[event]) this.events[event].subscribers.push(callback);
-  },
-  load: function(assets) {
-    const loader = assets.map(assetDef => {
-      return new Promise((res, rej) => {
-        const asset = assetDef.type === 'image' ? new Image() : new Audio();
-        asset.onerror = rej;
-        asset[assetDef.type === 'image' ? 'onload' : 'oncanplaythrough'] = res;
-        asset.src = assetDef.src;
-        this.cache[assetDef.type][assetDef.id] = asset;
+  // public
+  function removeEvent(name) {
+    const { [name]: deleted, ...others } = events;
+    events = others;
+    return events;
+  }
+
+  // public
+  function registerSprites() {
+    const sprites = Array.prototype.slice.call(arguments, 0);
+    sprites.forEach(sprite => {
+      const { id } = sprite;
+      entitiesKeys.unshift(id);
+      entities[id] = sprite;
+    });
+    return sprites;
+  }
+
+  // public
+  function unregisterSprites(sprites) {
+    sprites.forEach(sprite => {
+      const { id } = sprite;
+      entitiesKeys = entitiesKeys.filter(({ currId }) => currId !== id);
+      const { [id]: deleted, ...others } = entities;
+      entities = others;
+    });
+    return { entitiesKeys, entities };
+  }
+
+  // public
+  function clearEntities() {
+    entitiesKeys.length = 0;
+    entities = {};
+  }
+
+  // public
+  async function load(assets = []) {
+    const loaders = assets.map(({ type, src }) => {
+      return new Promise((resolve, reject) => {
+        const asset = type === ASSET_TYPE_IMAGE ? new Image() : new Audio();
+        asset.src = src;
+        asset[type === ASSET_TYPE_IMAGE ? 'onload' : 'oncanplaythrough'] = () =>
+          resolve(asset);
+        asset.onerror = () => reject(src);
       });
     });
-    Promise.all(loader).then(_ => {
-      Emmiter.emit(this.events, 'loadcomplete');
-    });
-  }
-};
 
-Vuni.createGame(800, 600).load([
-  {
-    type: 'image',
-    src: 'floor.png',
-    id: 'mother'
-  },
-  {
-    type: 'image',
-    src: 'anim.png',
-    id: 'knight'
+    let cache;
+    Promise.all(loaders)
+      .then(loadedAssets => {
+        emit(events, LOAD_COMPLETE_EVENT, cache);
+      })
+      .catch(e => {
+        console.log(
+          `Error loading your assets 8-| [[psss!!... check path: ${e}]`
+        );
+        setTimeout(function() {
+          throw e;
+        });
+      });
   }
-]);
 
-const motherSprite = {
-  resId: 'mother',
-  x: 0,
-  y: 0,
-  w: 144,
-  h: 144,
-  speed: 0,
-  visible: true
-};
+  // public
+  function use() {
+    const dependencies = Array.prototype.slice.call(arguments, 0);
+    dependencies.push(...dependencies);
+    return this;
+  }
 
-const knight = {
-  id: 'knight',
-  resId: 'knight',
-  x: 0,
-  y: 0,
-  w: 64,
-  h: 64,
-  speed: 240,
-  visible: true,
-  animations: {
-    current: 'left',
-    r: 2,
-    c: 2,
-    left: { time: 0, origin: 0, idx: 0, length: 3, duration: 120, size: 16 }
+  // public
+  function decorateWith(vuni, functionName, decorator) {
+    if (vuni[functionName]) {
+      vuni[functionName] = function() {
+        vuni[functionName]();
+        decorator();
+      };
+    }
+    return vuni;
   }
-};
 
-Vuni.on('loadcomplete', () => {
-  Vuni.scene.registerSprites(knight);
-  for (let i = 0; i < 10000; i++) {
-    Vuni.scene.registerSprites(
-      Object.assign(
-        {},
-        motherSprite,
-        { id: `${i}` },
-        { x: Math.random() * 5000 },
-        { y: Math.random() * 5000 }
-      )
-    );
+  // public
+  function start() {
+    entitiesKeys.forEach(key => entities[key].start(dt));
+    gameLoop();
   }
-  Vuni.camera.target = 'knight';
-  Vuni.camera.setRectCoords('world', 0, 0, 5000, 300);
-  Vuni.gameLoop();
-});
 
-Vuni.on('update', dt => {
-  const a = Vuni.scene.entities['knight'];
+  // public
+  function resume() {
+    paused = false;
+    lastFrameTime = Date.now();
+    gameLoop();
+  }
 
-  if (Vuni.input.left) {
-    a.x -= a.speed * dt;
+  // public
+  function pause() {
+    paused = true;
+    emit(events, PAUSE_EVENT);
   }
-  if (Vuni.input.right) {
-    a.x += a.speed * dt;
+
+  function update(dt) {
+    dependencies.forEach(dependency => dependency.update(dt));
+    entitiesKeys.forEach(key => entities[key].update(dt));
   }
-  if (Vuni.input.up) {
-    a.y -= a.speed * dt;
+
+  function render() {
+    ctx.fillRect(0, 0, width, height);
+    for (let i = 0, max = entitiesKeys.length; i < max; i++) {
+      const key = entitiesKeys[i];
+      const entity = entities[key];
+      entity.render(ctx, cache);
+    }
   }
-  if (Vuni.input.down) {
-    a.y += a.speed * dt;
+
+  function gameLoop() {
+    const now = Date.now();
+    deltaTime = (now - lastFrameTime) / 1000.0;
+    emit(events, UPDATE_EVENT, deltaTime);
+    update(deltaTime);
+    render();
+    lastFrameTime = now;
+    requestAnimationID = !paused ? requestAnimationFrame(gameLoop) : -1;
   }
-});
+
+  render();
+
+  return {
+    keys,
+    emit,
+    on,
+    addEvent,
+    removeEvent,
+    registerSprites,
+    unregisterSprites,
+    clearEntities,
+    load,
+    use,
+    decorateWith,
+    start,
+    resume,
+    pause
+  };
+}
