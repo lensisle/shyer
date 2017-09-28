@@ -1,3 +1,5 @@
+import compose from './utils/compose';
+
 export const ASSET_TYPE_IMAGE = 'image';
 export const ASSET_TYPE_AUDIO = 'audio';
 export const LOAD_COMPLETE_EVENT = 'loadcomplete';
@@ -12,7 +14,7 @@ export function createGame(width, height) {
   let entitiesKeys = [];
   let entities = {};
   let events = {};
-  let dependencies = [];
+  let extensions = [];
   let paused = false;
   let keys = {
     left: false,
@@ -20,6 +22,8 @@ export function createGame(width, height) {
     up: false,
     down: false
   };
+  let nativeUpdateEnabled = true;
+  let nativeRenderEnabled = true;
 
   const clearColor = '#D90368';
 
@@ -135,25 +139,26 @@ export function createGame(width, height) {
   }
 
   // public
-  function use() {
-    const dependencies = Array.prototype.slice.call(arguments, 0);
-    dependencies.push(...dependencies);
+  function extend() {
+    const args = Array.prototype.slice.call(arguments, 0);
+    extensions.push(...args);
     return this;
   }
 
   // public
-  function decorateWith(vuni, functionName, decorator) {
-    if (vuni[functionName]) {
-      vuni[functionName] = function() {
-        vuni[functionName]();
-        decorator();
-      };
+  function decorate(vuni, functionName, decorators) {
+    if (vuni[functionName] && vuni[functionName] instanceof Function && decorators.length > 0) {
+      const decorated = compose(...decorators)(vuni[functionName]);
+      vuni[functionName] = decorated;
     }
     return vuni;
   }
 
   // public
   function start() {
+    extensions.forEach(extension => {
+      if (extension.start) extension.start(this);
+    });
     entitiesKeys.forEach(key => entities[key].start(dt));
     gameLoop();
   }
@@ -171,13 +176,29 @@ export function createGame(width, height) {
     emit(events, PAUSE_EVENT);
   }
 
+  // public
+  function setNativeUpdateEnabled(enabled) {
+    nativeUpdateEnabled = enabled;
+  }
+
+  function setNativeRenderEnabled(enabled) {
+    nativeRenderEnabled = enabled;
+  }
+
   function update(dt) {
-    dependencies.forEach(dependency => dependency.update(dt));
+    extensions.forEach(extension => {
+      if (extension.update) extension.update(dt);
+    });
+    if(!nativeUpdateEnabled) return;
     entitiesKeys.forEach(key => entities[key].update(dt));
   }
 
   function render() {
     ctx.fillRect(0, 0, width, height);
+    extensions.forEach(extension => {
+      if (extension.render) extension.render(ctx, cache);
+    });
+    if(!nativeRenderEnabled) return;
     for (let i = 0, max = entitiesKeys.length; i < max; i++) {
       const key = entitiesKeys[i];
       const entity = entities[key];
@@ -207,10 +228,12 @@ export function createGame(width, height) {
     unregisterSprites,
     clearEntities,
     load,
-    use,
-    decorateWith,
+    extend,
+    decorate,
     start,
     resume,
-    pause
+    pause,
+    setNativeUpdateEnabled,
+    setNativeRenderEnabled
   };
 }
