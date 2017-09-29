@@ -7,7 +7,8 @@ export function createSprite(
   height,
   speed = 0,
   visible = true,
-  isStatic = false
+  collidable = false,
+  isStatic = false,
 ) {
   let colliding = false;
 
@@ -41,15 +42,31 @@ export function renderSprite({ resId, x, y, width, height, visible, isStatic }, 
   if (!isStatic) ctx.restore();
 }
 
-export function renderGroup(sprites = [], ctx, cache) {
+// TODO: Make this fn generic
+export function renderGroup(sprites = [], ctx, cache, renderFn) {
   sprites.forEach(sprite => renderSprite(sprite, ctx, cache));
 }
 
 export function createAnimatedSprite(sprite, crop, clips) {
   let currentClip = '';
   const { rows, columns, cropSize } = crop;
-  const { x, y, width, height, isStatic } = sprite;
 
+  function setCurrentClip(clipName) {
+    currentClip = clipName;
+  }
+
+  return {
+    ...sprite,
+    rows,
+    columns,
+    cropSize,
+    setCurrentClip
+  };
+}
+
+
+// implemente animated sprite rendering
+/*export function renderAnimatedSprite() {
   sprite.render = function(ctx, cache) {
     const clip = clips[currentClip];
     if (clip) {
@@ -68,6 +85,5 @@ export function createAnimatedSprite(sprite, crop, clips) {
       if (!isStatic) ctx.restore();
     }
   };
-
-  return sprite;
 }
+*/
