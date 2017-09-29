@@ -1,4 +1,4 @@
-import compose from './utils/compose';
+import compose from '../utils/compose';
 
 export const ASSET_TYPE_IMAGE = 'image';
 export const ASSET_TYPE_AUDIO = 'audio';
@@ -7,7 +7,7 @@ export const UPDATE_EVENT = 'update';
 export const PAUSE_EVENT = 'pause';
 
 export function createGame(width, height) {
-  let cache = {};
+  let cache = { image: {}, audio: {} };
   let lastFrameTime = Date.now();
   let requestAnimationID;
   let deltaTime = 0;
@@ -22,8 +22,6 @@ export function createGame(width, height) {
     up: false,
     down: false
   };
-  let nativeUpdateEnabled = true;
-  let nativeRenderEnabled = true;
 
   const clearColor = '#D90368';
 
@@ -84,6 +82,11 @@ export function createGame(width, height) {
   }
 
   // public
+  function getEntity(id) {
+    return entities[id];
+  }
+
+  // public
   function registerSprites() {
     const sprites = Array.prototype.slice.call(arguments, 0);
     sprites.forEach(sprite => {
@@ -113,17 +116,20 @@ export function createGame(width, height) {
 
   // public
   async function load(assets = []) {
-    const loaders = assets.map(({ type, src }) => {
+    const loaders = assets.map(({ resId, type, src }) => {
       return new Promise((resolve, reject) => {
         const asset = type === ASSET_TYPE_IMAGE ? new Image() : new Audio();
         asset.src = src;
-        asset[type === ASSET_TYPE_IMAGE ? 'onload' : 'oncanplaythrough'] = () =>
+        asset[
+          type === ASSET_TYPE_IMAGE ? 'onload' : 'oncanplaythrough'
+        ] = () => {
+          cache[type][resId] = asset;
           resolve(asset);
+        };
         asset.onerror = () => reject(src);
       });
     });
 
-    let cache;
     Promise.all(loaders)
       .then(loadedAssets => {
         emit(events, LOAD_COMPLETE_EVENT, cache);
@@ -147,7 +153,11 @@ export function createGame(width, height) {
 
   // public
   function decorate(vuni, functionName, decorators) {
-    if (vuni[functionName] && vuni[functionName] instanceof Function && decorators.length > 0) {
+    if (
+      vuni[functionName] &&
+      vuni[functionName] instanceof Function &&
+      decorators.length > 0
+    ) {
       const decorated = compose(...decorators)(vuni[functionName]);
       vuni[functionName] = decorated;
     }
@@ -159,7 +169,6 @@ export function createGame(width, height) {
     extensions.forEach(extension => {
       if (extension.start) extension.start(this);
     });
-    entitiesKeys.forEach(key => entities[key].start(dt));
     gameLoop();
   }
 
@@ -176,20 +185,10 @@ export function createGame(width, height) {
     emit(events, PAUSE_EVENT);
   }
 
-  // public
-  function setNativeUpdateEnabled(enabled) {
-    nativeUpdateEnabled = enabled;
-  }
-
-  function setNativeRenderEnabled(enabled) {
-    nativeRenderEnabled = enabled;
-  }
-
   function update(dt) {
     extensions.forEach(extension => {
       if (extension.update) extension.update(dt);
     });
-    if(!nativeUpdateEnabled) return;
     entitiesKeys.forEach(key => entities[key].update(dt));
   }
 
@@ -198,7 +197,6 @@ export function createGame(width, height) {
     extensions.forEach(extension => {
       if (extension.render) extension.render(ctx, cache);
     });
-    if(!nativeRenderEnabled) return;
     for (let i = 0, max = entitiesKeys.length; i < max; i++) {
       const key = entitiesKeys[i];
       const entity = entities[key];
@@ -224,6 +222,7 @@ export function createGame(width, height) {
     on,
     addEvent,
     removeEvent,
+    getEntity,
     registerSprites,
     unregisterSprites,
     clearEntities,
@@ -232,8 +231,6 @@ export function createGame(width, height) {
     decorate,
     start,
     resume,
-    pause,
-    setNativeUpdateEnabled,
-    setNativeRenderEnabled
+    pause
   };
 }

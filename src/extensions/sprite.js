@@ -1,39 +1,55 @@
-export default function createSprite(id, resId, x, y, width, height, speed, visible, static, crop) {
-
-  let animationClips = [];
-  let currentClip = '';
-
-  const { rows = 1, columns = 1, cropSize } = crop;
-
-  function setCurrentClip(clipId) {
-    currentClip = clipId;
-  }
-
-  function addAnimationClip(id, originIndex, length, frameDuration) {
-    const clip = { id, originIndex, length, frameDuration, idx: 0, time: 0 };
-    animationClips.push(clip);
-  }
-
-  function updateAnimations(dt) {
-    if (!animationClips[currentClip]) return;
-    const animation = animationClips[currentClip];
-    animation.time += dt * speed;
-    if (animation.time > animation.duration) {
-      animation.time = 0;
-      animation.idx += 1;
-      if (animation.idx > animation.origin + animation.length) {
-        animation.idx = animation.origin;
-      }
-    }
-  }
+export function createSprite(
+  id,
+  resId,
+  x,
+  y,
+  width,
+  height,
+  speed = 0,
+  visible = true,
+  isStatic = false
+) {
+  let colliding = false;
 
   function update(dt) {
-    updateAnimations(dt);
+    colliding = checkCollidde();
   }
 
-  function renderAnimations(ctx, cache) {
-    const clip = animationClips[currentClip];
+  function checkCollidde() {
+    return false; // placeholder
+  }
+
+  function render(ctx, cache) {
+    if (!visible) return;
+    if (!isStatic) ctx.save();
+    ctx.drawImage(cache.image[resId] || cache.default, x, y, width, height);
+    if (!isStatic) ctx.restore();
+  }
+
+  return {
+    id,
+    x,
+    y,
+    width,
+    height,
+    speed,
+    visible,
+    isStatic,
+    colliding,
+    render,
+    update
+  };
+}
+
+export function animateSprite(sprite, crop, clips) {
+  let currentClip = '';
+  const { rows, columns, cropSize } = crop;
+  const { x, y, width, height, isStatic } = sprite;
+
+  sprite.render = function(ctx, cache) {
+    const clip = clips[currentClip];
     if (clip) {
+      if (!isStatic) ctx.save();
       ctx.drawImage(
         cache.image[resId] || cache.default,
         (clip.idx % columns) * cropSize,
@@ -45,16 +61,9 @@ export default function createSprite(id, resId, x, y, width, height, speed, visi
         width,
         height
       );
+      if (!isStatic) ctx.restore();
     }
-  }
+  };
 
-  function render(ctx, cache) {
-    if (!static) ctx.save();
-    if (rows > 1 || columns > 1) {
-      renderAnimations(ctx, cache);
-    } else {
-      ctx.drawImage(cache.image[resId] || cache.default, x, y, width, height);
-    }
-    if (!static) ctx.restore();
-  }
+  return sprite;
 }
