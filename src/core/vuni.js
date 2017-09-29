@@ -173,7 +173,7 @@ export function createGame(width, height) {
   }
 
   // public
-  function decorate(vuni, functionName, decorators) {
+  function decorate(vuni, functionName, ...decorators) {
     let target = accessPrivateRegistry(functionName);
     if (!target) {
       target = vuni[functionName];
@@ -215,7 +215,7 @@ export function createGame(width, height) {
     entitiesKeys.forEach(key => entities[key].update(dt));
   }
 
-  function render() {
+  function render(ctx, cache) {
     ctx.fillRect(0, 0, width, height);
     emit(events, RENDER_EVT, { ctx, cache });
   }
@@ -224,7 +224,7 @@ export function createGame(width, height) {
     const now = Date.now();
     deltaTime = (now - lastFrameTime) / 1000.0;
     update(deltaTime);
-    render();
+    render(ctx, cache);
     lastFrameTime = now;
     requestAnimationID = !paused ? requestAnimationFrame(gameLoop) : -1;
   }

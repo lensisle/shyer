@@ -14,6 +14,14 @@ import {
 
 let game = createGame(800, 600);
 
+const renderDecorator = (fn) => {
+  return (ctx, cache) => {
+    fn(ctx, cache);
+  };
+}
+
+game.decorate(game, 'render', renderDecorator);
+
 let player;
 let enemy;
 
