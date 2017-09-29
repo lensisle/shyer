@@ -41,7 +41,7 @@ export function renderSprite({ resId, x, y, width, height, visible, isStatic }, 
   if (!isStatic) ctx.restore();
 }
 
-export function renderGroup(sprites, ctx, cache) {
+export function renderGroup(sprites = [], ctx, cache) {
   sprites.forEach(sprite => renderSprite(sprite, ctx, cache));
 }
 

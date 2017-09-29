@@ -13,8 +13,6 @@ import {
 } from './extensions/sprite';
 
 let game = createGame(800, 600);
-game = game.decorate(game, 'render', () => console.log('rendering!'));
-console.log(game);
 
 let player;
 let enemy;
@@ -24,10 +22,10 @@ game.load([
   { resId: 'floor', type: ASSET_TYPE_IMAGE, src: 'floor.png' }
 ]);
 
-game.on(LOAD_COMPLETE_EVT, cache => {
+game.on(LOAD_COMPLETE_EVT, () => {
   player = createSprite('player', 'knight', 50, 50, 80, 80, 200);
-  enemy = createSprite('enemy', 'knight', 200, 100, 80, 80, 10, true, false);
-  const sprites = game.registerSprites(player, enemy);
+  enemy = createSprite('enemy', 'knight', 300, 300, 80, 80, 10, true, false);
+  const sprites = game.registerEntity(player, enemy);
   game.start();
 });
 
@@ -47,5 +45,5 @@ game.on(UPDATE_EVT, dt => {
 });
 
 game.on(RENDER_EVT, ({ctx, cache}) => {
-  renderGroup([player, enemy], ctx, cache);
+  renderGroup([enemy, player], ctx, cache);
 });

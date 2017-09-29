@@ -90,7 +90,7 @@ export function createGame(width, height) {
   }
 
   // public
-  function registerSprites() {
+  function registerEntity() {
     const sprites = Array.prototype.slice.call(arguments, 0);
     sprites.forEach(sprite => {
       const { id } = sprite;
@@ -101,7 +101,7 @@ export function createGame(width, height) {
   }
 
   // public
-  function unregisterSprites(sprites) {
+  function unregisterEntity(sprites) {
     sprites.forEach(sprite => {
       const { id } = sprite;
       entitiesKeys = entitiesKeys.filter(({ currId }) => currId !== id);
@@ -154,17 +154,34 @@ export function createGame(width, height) {
     return this;
   }
 
+  function accessPrivateRegistry(functionName) {
+    switch(functionName) {
+      case 'update': return update;
+      case 'render': return render;
+    }
+  }
+
+  function replacePrivateRegistry(functionName, func) {
+    switch(functionName) {
+      case 'update':
+        update = func;
+        break;
+      case 'render':
+        render = func;
+        break;
+    }
+  }
+
   // public
   function decorate(vuni, functionName, decorators) {
-    if (
-      vuni[functionName] &&
-      vuni[functionName] instanceof Function &&
-      decorators.length > 0
-    ) {
-      const decorated = compose(...decorators)(vuni[functionName]);
-      vuni[functionName] = decorated;
+    let target = accessPrivateRegistry(functionName);
+    if (!target) {
+      target = vuni[functionName];
     }
-    return vuni;
+    if (target && target instanceof Function && decorators.length > 0) {
+      const decorated = compose(...decorators)(target);
+      replacePrivateRegistry(functionName, decorated);
+    }
   }
 
   // public
@@ -221,8 +238,8 @@ export function createGame(width, height) {
     addEvent,
     removeEvent,
     getEntity,
-    registerSprites,
-    unregisterSprites,
+    registerEntity,
+    unregisterEntity,
     clearEntities,
     load,
     extend,
