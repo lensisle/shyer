@@ -14,13 +14,23 @@ import {
 
 let game = createGame(800, 600);
 
+// render -> decorator1(render) -> decorator2(decorator1(render))(ctx, cache);
+
 const renderDecorator = (fn) => {
   return (ctx, cache) => {
-    fn(ctx, cache);
+    console.log('starting render');
+    return fn(ctx, cache);
   };
 }
 
-game.decorate(game, 'render', renderDecorator);
+const renderDecorator2 = (fn) => {
+  return (ctx, cache) => {
+    fn(ctx, cache);
+    console.log('finish rendering!');
+  };
+};
+
+game.decorate(game, 'render', renderDecorator2, renderDecorator);
 
 let player;
 let enemy;
@@ -53,5 +63,6 @@ game.on(UPDATE_EVT, dt => {
 });
 
 game.on(RENDER_EVT, ({ctx, cache}) => {
+  console.log('rendering', enemy, player);
   renderGroup([enemy, player], ctx, cache);
 });
