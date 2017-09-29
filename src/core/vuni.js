@@ -2,9 +2,12 @@ import compose from '../utils/compose';
 
 export const ASSET_TYPE_IMAGE = 'image';
 export const ASSET_TYPE_AUDIO = 'audio';
-export const LOAD_COMPLETE_EVENT = 'loadcomplete';
-export const UPDATE_EVENT = 'update';
-export const PAUSE_EVENT = 'pause';
+
+export const LOAD_COMPLETE_EVT = 'loadcomplete';
+export const START_EVT = 'start';
+export const RENDER_EVT = 'render';
+export const UPDATE_EVT = 'update';
+export const PAUSE_EVT = 'pause';
 
 export function createGame(width, height) {
   let cache = { image: {}, audio: {} };
@@ -39,7 +42,7 @@ export function createGame(width, height) {
 
   cache.default = new Image();
 
-  [UPDATE_EVENT, LOAD_COMPLETE_EVENT, PAUSE_EVENT].forEach(evtKey =>
+  [LOAD_COMPLETE_EVT, START_EVT, RENDER_EVT, UPDATE_EVT, PAUSE_EVT].forEach(evtKey =>
     addEvent(evtKey)
   );
 
@@ -132,7 +135,7 @@ export function createGame(width, height) {
 
     Promise.all(loaders)
       .then(loadedAssets => {
-        emit(events, LOAD_COMPLETE_EVENT, cache);
+        emit(events, LOAD_COMPLETE_EVT, cache);
       })
       .catch(e => {
         console.log(
@@ -169,6 +172,7 @@ export function createGame(width, height) {
     extensions.forEach(extension => {
       if (extension.start) extension.start(this);
     });
+    emit(events, START_EVT);
     gameLoop();
   }
 
@@ -176,16 +180,18 @@ export function createGame(width, height) {
   function resume() {
     paused = false;
     lastFrameTime = Date.now();
+    emit(events, PAUSE_EVT, false);
     gameLoop();
   }
 
   // public
   function pause() {
     paused = true;
-    emit(events, PAUSE_EVENT);
+    emit(events, PAUSE_EVT, true);
   }
 
   function update(dt) {
+    emit(events, UPDATE_EVT, dt);
     extensions.forEach(extension => {
       if (extension.update) extension.update(dt);
     });
@@ -194,27 +200,19 @@ export function createGame(width, height) {
 
   function render() {
     ctx.fillRect(0, 0, width, height);
-    extensions.forEach(extension => {
-      if (extension.render) extension.render(ctx, cache);
-    });
-    for (let i = 0, max = entitiesKeys.length; i < max; i++) {
-      const key = entitiesKeys[i];
-      const entity = entities[key];
-      entity.render(ctx, cache);
-    }
+    emit(events, RENDER_EVT, { ctx, cache });
   }
 
   function gameLoop() {
     const now = Date.now();
     deltaTime = (now - lastFrameTime) / 1000.0;
-    emit(events, UPDATE_EVENT, deltaTime);
     update(deltaTime);
     render();
     lastFrameTime = now;
     requestAnimationID = !paused ? requestAnimationFrame(gameLoop) : -1;
   }
 
-  render();
+  ctx.fillRect(0, 0, width, height);
 
   return {
     keys,

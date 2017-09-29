@@ -19,15 +19,9 @@ export function createSprite(
     return false; // placeholder
   }
 
-  function render(ctx, cache) {
-    if (!visible) return;
-    if (!isStatic) ctx.save();
-    ctx.drawImage(cache.image[resId] || cache.default, x, y, width, height);
-    if (!isStatic) ctx.restore();
-  }
-
   return {
     id,
+    resId,
     x,
     y,
     width,
@@ -36,12 +30,22 @@ export function createSprite(
     visible,
     isStatic,
     colliding,
-    render,
     update
   };
 }
 
-export function animateSprite(sprite, crop, clips) {
+export function renderSprite({ resId, x, y, width, height, visible, isStatic }, ctx, cache) {
+  if (!visible) return;
+  if (!isStatic) ctx.save();
+  ctx.drawImage(cache.image[resId] || cache.default, x, y, width, height);
+  if (!isStatic) ctx.restore();
+}
+
+export function renderGroup(sprites, ctx, cache) {
+  sprites.forEach(sprite => renderSprite(sprite, ctx, cache));
+}
+
+export function createAnimatedSprite(sprite, crop, clips) {
   let currentClip = '';
   const { rows, columns, cropSize } = crop;
   const { x, y, width, height, isStatic } = sprite;
