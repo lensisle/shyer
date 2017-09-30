@@ -2,7 +2,10 @@
   "name": "shyer",
   "version": "0.0.2",
   "main": "./src/index.js",
-  "module": "es/index.js",
+  "module": "./es/index.js",
+  "author": {
+    "name": "camkida"
+  },
   "license": "MIT",
   "scripts": {
     "build:commonjs": "cross-env SHYER_ENV=commonjs babel src --out-dir lib",
