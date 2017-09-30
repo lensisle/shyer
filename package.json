@@ -1,6 +1,6 @@
 {
   "name": "shyer",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "main": "lib/index.js",
   "module": "es/index.js",
   "author": {
@@ -24,7 +24,7 @@
       "cross-env SHYER_ENV=es NODE_ENV=production rollup -c -i src/index.js -o dist/shyer.min.js",
     "build":
       "yarn clean && yarn build:commonjs && yarn build:es && yarn build:umd && yarn build:umd:min",
-    "clean": "rimraf dist lib playground"
+    "clean": "rimraf dist lib playground es"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
