@@ -16,7 +16,15 @@ import {
   renderAnimatedSprite
 } from "./extensions/sprite";
 
+import createCamera from "./extensions/camera";
+
+const camera = createCamera(
+  { x: 0, y: 0, width: 800, height: 600 },
+  { x: 0, y: 0, width: 5000, height: 5000 }
+);
+
 let game = createGame(800, 600);
+game.extend(camera);
 
 let player;
 const playerAnimationIdle = createAnimationClip(0, 4, 0.3);
@@ -55,9 +63,10 @@ game.on(UPDATE_EVT, dt => {
   if (game.keys.down) {
     player.y += player.speed * dt;
   }
+
+  camera.follow(player, 800 / 2, 600 / 2);
 });
 
 game.on(RENDER_EVT, ({ ctx, cache }) => {
-  renderGroup([enemy], ctx, cache, renderSprite);
-  renderAnimatedSprite(player, ctx, cache);
+  camera.render([player], renderAnimatedSprite, ctx, cache);
 });

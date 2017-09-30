@@ -240,6 +240,11 @@ export function createGame(width, height) {
     requestAnimationID = !paused ? requestAnimationFrame(gameLoop) : -1;
   }
 
+  // public
+  function setClearColor(color) {
+    ctx.fillStyle = color;
+  }
+
   ctx.fillRect(0, 0, width, height);
 
   return {
@@ -257,6 +262,7 @@ export function createGame(width, height) {
     decorate,
     start,
     resume,
-    pause
+    pause,
+    setClearColor
   };
 }

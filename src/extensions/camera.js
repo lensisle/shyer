@@ -1,33 +1,72 @@
-const camera = {
-  target: '',
-  mtx: [{ x: 0, y: 0, w: 0, h: 0 }, { x: 0, y: 0, w: 0, h: 0 }],
-  setRectCoords: function(t, x, y, w, h) {
-    const i = t === 'viewport' ? 0 : t === 'world' ? 1 : -1;
-    this.mtx[clamp(i, 0, 1)] =
-      i === 0 || i === 1
-        ? Object.assign({}, { x, y, w, h })
-        : this.mtx[clamp(i, 0, 1)];
-  },
-  follow: function({ x, y }, dzx, dzy) {
-    const vm = this.mtx[0],
-      wm = this.mtx[1];
-    const vx =
-      x - vm.x + dzx > vm.w
-        ? x - (vm.w - dzx)
-        : x - dzx < vm.x ? x - dzx : vm.x;
-    const vy =
-      y - vm.y + dzy > vm.h
-        ? y - (vm.h - dzy)
-        : y - dzy < vm.y ? y - dzy : vm.y;
-    this.mtx[0].x = clamp(vx, wm.x - dzx, wm.x + wm.w - dzx);
-    this.mtx[0].y = clamp(vy, wm.y - dzy, wm.y + wm.h - dzy);
-  },
-  contains: function({ x, y, w, h }) {
+import { clamp } from "../utils/math_utils";
+
+export default function createCamera(viewportRect, worldRect) {
+  let { x: vx, y: vy, width: vw, height: vh } = viewportRect;
+  let { x: wx, y: wy, width: ww, height: wh } = worldRect;
+
+  let currentTarget = { x: 0, y: 0 };
+  let dzx = 0;
+  let dzy = 0;
+
+  function setViewportSize(x, y, width, height) {
+    vx = x;
+    vy = y;
+    vw = width;
+    vh = height;
+  }
+
+  function setWorldSize(x, y, width, height) {
+    wx = x;
+    wy = y;
+    ww = width;
+    wh = height;
+  }
+
+  function follow({ x, y }, deadZoneX, deadZoneY) {
+    currentTarget.x = x;
+    currentTarget.y = y;
+    dzx = deadZoneX;
+    dzy = deadZoneY;
+  }
+
+  function update(dt) {
+    const vxNext =
+      currentTarget.x - vx + dzx > vw
+        ? currentTarget.x - (vw - dzx)
+        : currentTarget.x - dzx < vx ? currentTarget.x - dzx : vx;
+    const vyNext =
+      currentTarget.y - vy + dzy > vh
+        ? currentTarget.y - (vh - dzy)
+        : currentTarget.y - dzy < vy ? currentTarget.y - dzy : vy;
+    vx = clamp(vxNext, wx - dzx, wx + ww - dzx);
+    vy = clamp(vyNext, wy - dzy, wy + wh - dzy);
+  }
+
+  function render(entities = [], renderFn, ctx, cache) {
+    for (let i = 0, max = entities.length; i < max; i++) {
+      const entity = entities[i];
+      if (!contains(entity)) continue;
+      const renderEntity = Object.assign({}, entities[i]);
+      renderEntity.x = entity.x - entity.width / 2 - vx;
+      renderEntity.y = entity.y - entity.height / 2 - vy;
+      renderFn(renderEntity, ctx, cache);
+    }
+  }
+
+  function contains({ x, y, width, height }) {
     return (
-      x - this.mtx[0].x + w / 2.0 >= 0 &&
-      x - this.mtx[0].x - w / 2.0 <= this.mtx[0].w &&
-      y - this.mtx[0].y + h / 2.0 >= 0 &&
-      y - this.mtx[0].y - h / 2.0 <= this.mtx[0].h
+      x - vx + width / 2.0 >= 0 &&
+      x - vx - width / 2.0 <= vw &&
+      y - vy + height / 2.0 >= 0 &&
+      y - vy - height / 2.0 <= vh
     );
   }
-};
+
+  return {
+    setViewportSize,
+    setWorldSize,
+    follow,
+    render,
+    update
+  };
+}
