@@ -38,7 +38,3 @@ Upcoming Features:
 ```bash
 'yarn build' .  
 ```
-**run** 
-```bash
-'yarn start:dev'
-```
