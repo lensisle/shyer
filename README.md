@@ -1,4 +1,5 @@
-# Shyer
+<img src="https://raw.githubusercontent.com/camiloei/shyer/master/logo/shyerlogo.png" width="250" height="250"/>
+
 Shyer's a small (Under 4kb minified) and straightforward library for making 2D HTML5 games. 
 It's also pluggable, event based and easily expandable. (and will be faster, if you want).
 
