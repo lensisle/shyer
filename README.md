@@ -1,6 +1,6 @@
 # Shyer
-Shyer is very small (Under 4kb minified) and straightforward. 
-It's also pluggable, event based and easily expandable. (It will be also faster, if you want).
+Shyer's a small (Under 4kb minified) and straightforward library for making 2D HTML5 games. 
+It's also pluggable, event based and easily expandable. (and will be faster, if you want).
 
 Current Features:
   - Sprites (Extension)
