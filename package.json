@@ -1,6 +1,6 @@
 {
   "name": "shyer",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "lib/index.js",
   "module": "es/index.js",
   "author": {
@@ -18,12 +18,9 @@
   "scripts": {
     "build:commonjs": "cross-env SHYER_ENV=commonjs babel src --out-dir lib",
     "build:es": "cross-env SHYER_ENV=es babel src --out-dir es",
-    "build:umd":
-      "cross-env SHYER_ENV=es NODE_ENV=development rollup -c -i src/index.js -o dist/shyer.js",
-    "build:umd:min":
-      "cross-env SHYER_ENV=es NODE_ENV=production rollup -c -i src/index.js -o dist/shyer.min.js",
-    "build":
-      "yarn clean && yarn build:commonjs && yarn build:es && yarn build:umd && yarn build:umd:min",
+    "build:umd": "cross-env SHYER_ENV=es NODE_ENV=development rollup -c -i src/index.js -o dist/shyer.js",
+    "build:umd:min": "cross-env SHYER_ENV=es NODE_ENV=production rollup -c -i src/index.js -o dist/shyer.min.js",
+    "build": "yarn clean && yarn build:commonjs && yarn build:es && yarn build:umd && yarn build:umd:min",
     "clean": "rimraf dist lib playground"
   },
   "devDependencies": {
