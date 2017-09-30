@@ -68,5 +68,6 @@ game.on(UPDATE_EVT, dt => {
 });
 
 game.on(RENDER_EVT, ({ ctx, cache }) => {
+  camera.render([enemy], renderSprite, ctx, cache);
   camera.render([player], renderAnimatedSprite, ctx, cache);
 });
