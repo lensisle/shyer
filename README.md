@@ -61,7 +61,7 @@ Upcoming Features:
   game.start();
  });
  
- game.on('start', cache => {
+ game.on('start', () => {
   // initialize things
  });
  
