@@ -70,7 +70,12 @@ Upcoming Features:
   // game logic
  });
  
- game.on('render', (ctx, cache) => {
+ // do you want to separate your update logic? just add another subcriber
+ game.on('update', dt => {
+  // game logic 2
+ });
+ 
+ game.on('render', ({ ctx, cache }) => {
   // render logic
  });
 ```
