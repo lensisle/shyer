@@ -101,19 +101,20 @@ export function createGame(width, height) {
 
   // public
   function registerEntity() {
-    const sprites = Array.prototype.slice.call(arguments, 0);
-    sprites.forEach(sprite => {
-      const { id } = sprite;
+    const targets = Array.prototype.slice.call(arguments, 0);
+    targets.forEach(entity => {
+      const { id } = entity;
       entitiesKeys.unshift(id);
-      entities[id] = sprite;
+      entities[id] = entity;
     });
-    return sprites;
+    return targets;
   }
 
   // public
-  function unregisterEntity(sprites) {
-    sprites.forEach(sprite => {
-      const { id } = sprite;
+  function unregisterEntity() {
+    const targets = Array.prototype.slice.call(arguments, 0);
+    targets.forEach(entity => {
+      const { id } = entity;
       entitiesKeys = entitiesKeys.filter(({ currId }) => currId !== id);
       const { [id]: deleted, ...others } = entities;
       entities = others;
@@ -231,9 +232,9 @@ export function createGame(width, height) {
   }
 
   // private
-  function render(ctx, cache) {
-    ctx.fillRect(0, 0, width, height);
-    emit(events, RENDER_EVT, { ctx, cache });
+  function render(gameCtx, cache) {
+    gameCtx.fillRect(0, 0, width, height);
+    emit(events, RENDER_EVT, { ctx: gameCtx, cache });
   }
 
   // private
