@@ -1,13 +1,13 @@
-import compose from "../utils/compose";
+import compose from '../utils/compose';
 
-export const ASSET_TYPE_IMAGE = "image";
-export const ASSET_TYPE_AUDIO = "audio";
+export const ASSET_TYPE_IMAGE = 'image';
+export const ASSET_TYPE_AUDIO = 'audio';
 
-export const LOAD_COMPLETE_EVT = "loadcomplete";
-export const START_EVT = "start";
-export const RENDER_EVT = "render";
-export const UPDATE_EVT = "update";
-export const PAUSE_EVT = "pause";
+export const LOAD_COMPLETE_EVT = 'loadcomplete';
+export const START_EVT = 'start';
+export const RENDER_EVT = 'render';
+export const UPDATE_EVT = 'update';
+export const PAUSE_EVT = 'pause';
 
 export function createGame(width, height) {
   let cache = { image: {}, audio: {} };
@@ -23,17 +23,19 @@ export function createGame(width, height) {
     left: false,
     right: false,
     up: false,
-    down: false
+    down: false,
+    accept: false,
+    cancel: false
   };
 
-  const clearColor = "#D90368";
+  const clearColor = '#D90368';
 
-  const canvas = document.createElement("canvas");
-  canvas["id"] = "vuni-root";
-  canvas["width"] = width;
-  canvas["height"] = height;
-  canvas["tabIndex"] = 1000;
-  canvas["style"]["outline"] = "none";
+  const canvas = document.createElement('canvas');
+  canvas['id'] = 'vuni-root';
+  canvas['width'] = width;
+  canvas['height'] = height;
+  canvas['tabIndex'] = 1000;
+  canvas['style']['outline'] = 'none';
 
   document.body.appendChild(canvas);
 
@@ -53,11 +55,15 @@ export function createGame(width, height) {
   const onInput = value => (evt = window.event) => {
     const { keyCode } = evt;
     const key =
-      keyCode === 37
-        ? "left"
-        : keyCode === 38
-          ? "up"
-          : keyCode === 39 ? "right" : keyCode === 40 ? "down" : "";
+      keyCode === 90
+        ? 'accept'
+        : keyCode === 88
+          ? 'cancel'
+          : keyCode === 37
+            ? 'left'
+            : keyCode === 38
+              ? 'up'
+              : keyCode === 39 ? 'right' : keyCode === 40 ? 'down' : '';
     keys[key] = value;
   };
 
@@ -128,7 +134,7 @@ export function createGame(width, height) {
         const asset = type === ASSET_TYPE_IMAGE ? new Image() : new Audio();
         asset.src = src;
         asset[
-          type === ASSET_TYPE_IMAGE ? "onload" : "oncanplaythrough"
+          type === ASSET_TYPE_IMAGE ? 'onload' : 'oncanplaythrough'
         ] = () => {
           cache[type][resId] = asset;
           resolve(asset);
@@ -161,9 +167,9 @@ export function createGame(width, height) {
   // private
   function accessPrivateRegistry(functionName) {
     switch (functionName) {
-      case "update":
+      case 'update':
         return update;
-      case "render":
+      case 'render':
         return render;
     }
   }
@@ -171,10 +177,10 @@ export function createGame(width, height) {
   // private
   function replacePrivateRegistry(functionName, func) {
     switch (functionName) {
-      case "update":
+      case 'update':
         update = func;
         break;
-      case "render":
+      case 'render':
         render = func;
         break;
     }
@@ -195,7 +201,7 @@ export function createGame(width, height) {
   // public
   function start() {
     extensions.forEach(extension => {
-      if (extension.start) extension.start(this);
+      if (extension.start) extension.start(this, cache);
     });
     emit(events, START_EVT);
     gameLoop();
