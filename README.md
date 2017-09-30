@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/camiloei/shyer/master/logo/shyerlogo.png" width="250" height="250"/>
 
-Shyer's a small (Under 4kb minified) and straightforward library for making 2D HTML5 games. 
+Shyer's a small (Under 6kb minified) and straightforward library for making 2D HTML5 games. 
 It's also pluggable, event based and easily expandable. (and will be faster, if you want).
 
 Current Features:
@@ -57,7 +57,7 @@ Upcoming Features:
   // both reference the same loaded resource
   const player = createSprite('player', 'knight', 50, 50, 80, 80, 200);
   const otherThing = createSprite('otherThing', 'knight', 300, 300, 80, 80, 200);
-  // can register more than one entity with one call
+  // you can register more than one entity with one call
   game.registerEntity(player, otherThing);
   game.start();
  });
@@ -70,7 +70,7 @@ Upcoming Features:
   // game logic
  });
  
- // do you want to separate your update logic? just add another subcriber
+ // do you want to separate your update logic? just add another subscriber
  game.on('update', dt => {
   // game logic 2
  });
