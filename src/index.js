@@ -7,7 +7,7 @@ import {
   RENDER_EVT,
   UPDATE_EVT,
   PAUSE_EVT
-} from './core/vuni';
+} from './core/shyer';
 
 export {
   createGame,
@@ -18,4 +18,4 @@ export {
   RENDER_EVT,
   UPDATE_EVT,
   PAUSE_EVT
-}
+};
