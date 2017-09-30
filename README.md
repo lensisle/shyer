@@ -1,30 +1,31 @@
-# vuni
-micro 2d game library
-
-Current lib size: 156 LoC - 5kb (unminified)
+# Shyer
+Shyer is very small (Under 4kb minified) and straightforward. 
+It's also pluggable, event based and easily expandable. (It will be also faster, if you want).
 
 Current Features:
-  - Sprites
-  - Camera
-  - Scenes
+  - Sprites (Extension)
+  - Camera (Extension)
   - Events
   - Input
   - Asset Loading
-  - Animated Sprites
+  - Animated Sprites (Extension)
+  - Audio (Extension)
+  - Extensions Support
+  - Decorators
 
 Upcoming Features:
   - Mouse Input
-  - Layers (?)
+  - Documentation
+  - Npm module setup
+  - Render Layers (?)
   - Object Pools (?)
   - Tilemaps (?)
-  - Audio Playback / Events
-  - Npm module setup 
   - WebGL Rendering (?)
   - Hardcore Perf Optimizations (?)
   
-(?): not in the short term
+(?) -> not doable in the short term
 
-Requirements:
+**Requirements**
 
 1. yarn   
  ```bash
@@ -32,7 +33,6 @@ Requirements:
     curl -o- -L https://yarnpkg.com/install.sh | bash
 
   ```
-Setup:
 
 **build** 
 ```bash

@@ -1,0 +1,21 @@
+import {
+  createGame,
+  ASSET_TYPE_IMAGE,
+  ASSET_TYPE_AUDIO,
+  LOAD_COMPLETE_EVT,
+  START_EVT,
+  RENDER_EVT,
+  UPDATE_EVT,
+  PAUSE_EVT
+} from './core/shyer';
+
+export {
+  createGame,
+  ASSET_TYPE_IMAGE,
+  ASSET_TYPE_AUDIO,
+  LOAD_COMPLETE_EVT,
+  START_EVT,
+  RENDER_EVT,
+  UPDATE_EVT,
+  PAUSE_EVT
+};
