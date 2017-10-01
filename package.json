@@ -24,7 +24,8 @@
       "cross-env SHYER_ENV=es NODE_ENV=production rollup -c -i src/index.js -o dist/shyer.min.js",
     "build":
       "yarn cleanWS && yarn build:commonjs && yarn build:es && yarn build:umd && yarn build:umd:min",
-    "cleanWS": "rimraf dist lib playground es"
+    "cleanWS": "rimraf dist lib es pgbuild",
+    "playground": "webpack && webpack-dev-server"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

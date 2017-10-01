@@ -2,3 +2,6 @@ src
 node_modules
 .babelrc
 rollup.config.js
+playground
+webpack.config.js
+pgbuild
