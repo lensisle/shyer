@@ -122,7 +122,7 @@ Collisions
     obstacle.life -= 200;
 
     // this collision event will stay active (checking every frame) until this expression 
-    // (obstacle.visible) evaluates to false.
+    // (obstacle.life >= 0) evaluates to false.
    }, (obstacle.life >= 0));
 
  });
