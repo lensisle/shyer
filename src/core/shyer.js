@@ -71,7 +71,7 @@ export function createGame(width, height) {
   canvas.onkeyup = onInput(false);
 
   // public
-  function emit(events, eventName, data) {
+  function emit(eventName, data) {
     events[eventName].subscribers.forEach(sub => sub(data));
   }
 
@@ -146,7 +146,7 @@ export function createGame(width, height) {
 
     Promise.all(loaders)
       .then(loadedAssets => {
-        emit(events, LOAD_COMPLETE_EVT, cache);
+        emit(LOAD_COMPLETE_EVT, cache);
       })
       .catch(e => {
         console.log(
@@ -204,7 +204,7 @@ export function createGame(width, height) {
     extensions.forEach(extension => {
       if (extension.start) extension.start(this, cache);
     });
-    emit(events, START_EVT);
+    emit(START_EVT);
     gameLoop();
   }
 
@@ -212,19 +212,19 @@ export function createGame(width, height) {
   function resume() {
     paused = false;
     lastFrameTime = Date.now();
-    emit(events, PAUSE_EVT, false);
+    emit(PAUSE_EVT, false);
     gameLoop();
   }
 
   // public
   function pause() {
     paused = true;
-    emit(events, PAUSE_EVT, true);
+    emit(PAUSE_EVT, true);
   }
 
   // private
   function update(dt) {
-    emit(events, UPDATE_EVT, dt);
+    emit(UPDATE_EVT, dt);
     extensions.forEach(extension => {
       if (extension.update) extension.update(dt);
     });
@@ -234,7 +234,7 @@ export function createGame(width, height) {
   // private
   function render(gameCtx, cache) {
     gameCtx.fillRect(0, 0, width, height);
-    emit(events, RENDER_EVT, { ctx: gameCtx, cache });
+    emit(RENDER_EVT, { ctx: gameCtx, cache });
   }
 
   // private
