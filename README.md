@@ -115,14 +115,12 @@ Collisions
 
  game.on('update', dt => {
 
-   // if player collides with the obstacle
+   // this arrow function will be called if player collides with the obstacle
    collideWith(player, obstacle, () => {
-    // then this function is called.
-
+    
     obstacle.life -= 200;
 
-    // this collision event will stay active (checking every frame) until this expression 
-    // (obstacle.life >= 0) evaluates to false.
+    // this collision event will stay active (checking every frame) until the expression (obstacle.life >= 0) evaluates to false.
    }, (obstacle.life >= 0));
 
  });
