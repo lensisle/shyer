@@ -193,7 +193,7 @@ Decorators
   // you can also decorate your own functions or other Shyer functions
   game.decorate(game, 'render', renderLogEntitiesDecorator, renderCircleDecorator);
 
-  // ... after this decoration, every render call will draw an arc and log all the game entities.
+  // ... after this decoration, each render call will draw an arc and log all the game entities.
 
 ```
 
