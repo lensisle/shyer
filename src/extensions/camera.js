@@ -1,4 +1,4 @@
-import { clamp } from "../utils/math_utils";
+import { clamp } from '../utils/math_utils';
 
 export function createCamera(viewportRect, worldRect) {
   let { x: vx, y: vy, width: vw, height: vh } = viewportRect;
