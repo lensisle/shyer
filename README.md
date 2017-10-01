@@ -107,7 +107,7 @@ Collisions
  
  game.on('loadcomplete', cache => {
   player = createSprite('player', 'knight', 50, 50, 80, 80);
-  obstacle = createSprite('otherThing', 'knight', 300, 300, 80, 80);
+  obstacle = createSprite('obstacle', 'obstacle', 300, 300, 80, 80);
   obstacle.life = 100;
   game.registerEntity(player, obstacle);
   game.start();
