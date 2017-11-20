@@ -1,16 +1,56 @@
-import compose from '../utils/compose';
+const globalEvents = {
 
-export const ASSET_TYPE_IMAGE = 'image';
-export const ASSET_TYPE_AUDIO = 'audio';
+};
 
-export const LOAD_COMPLETE_EVT = 'loadcomplete';
-export const START_EVT = 'start';
-export const RENDER_EVT = 'render';
-export const UPDATE_EVT = 'update';
-export const PAUSE_EVT = 'pause';
+const scenes = {
 
-export function createGame(width, height) {
-  let cache = { image: {}, audio: {} };
+};
+
+const store = {
+
+
+};
+
+let gameInstance = {
+
+};
+
+function Game(width, height) {
+
+}
+
+function state(store) {
+
+}
+
+function create(width, height) {
+
+}
+
+function preload(scenes = []) {
+
+}
+
+function addEvent(sceneName, eventName, fn) {
+
+}
+
+function addGlobalEvent(eventName, fn) {
+
+}
+
+function changeScene(sceneName, preserveAssets) {
+  
+}
+
+
+/*
+export function Game(width, height) {
+  const cache = {
+    images: {},
+    audio: {}
+  };
+
   let lastFrameTime = Date.now();
   let requestAnimationID;
   let deltaTime = 0;
@@ -77,7 +117,7 @@ export function createGame(width, height) {
 
   // public
   function on(event, callback) {
-    if (events[event]) {
+    if (events[event] && typeof(callback) === 'function') {
       events[event].subscribers.push(callback);
     }
   }
@@ -273,3 +313,4 @@ export function createGame(width, height) {
     setClearColor
   };
 }
+*/

@@ -1,97 +1,93 @@
-import { Shyer, Sprite, Camera } from '../src/index';
-const {
-  createGame,
-  ASSET_TYPE_IMAGE,
-  LOAD_COMPLETE_EVT,
-  UPDATE_EVT,
-  RENDER_EVT
-} = Shyer;
-const {
-  createAnimationClip,
-  createSprite,
-  createAnimatedSprite,
-  collideWith,
-  renderSprite,
-  renderAnimatedSprite
-} = Sprite;
-const { createCamera } = Camera;
+import SceneFactory from '../src/core/scene';
 
-const game = createGame(600, 400);
-game.setClearColor('#ffffff');
-game.load([{ resId: 'boredcat', src: 'boredcat.png', type: ASSET_TYPE_IMAGE }]);
+const game = {
+  name: 'Cam'
+};
 
-const camera = createCamera(
-  { x: 0, y: 0, width: 600, height: 400 },
-  { x: 0, y: 0, width: 4000, height: 1250 }
-);
+const scene = {
 
-let player;
-let obstacle;
+};
 
-const moveDownClip = createAnimationClip(0, 1, 0);
-const moveUpClip = createAnimationClip(1, 1, 0);
-const moveRightClip = createAnimationClip(2, 1, 0);
-const moveLeftClip = createAnimationClip(3, 1, 0);
+const builtScene = SceneFactory(game, scene);
 
-game.on(LOAD_COMPLETE_EVT, () => {
-  player = createSprite('player', 'boredcat', 50, 50, 100, 100);
-  obstacle = createSprite('obstacle', 'boredcat', 300, 300, 100, 100);
-  player = createAnimatedSprite(
-    player,
-    { rows: 2, columns: 3, cropSize: 101 },
-    {
-      moveLeftClip,
-      moveRightClip,
-      moveUpClip,
-      moveDownClip
-    },
-    'moveDownClip'
-  );
-  player.speed = 180;
-  game.registerEntity(player);
-  game.start();
+console.log('SCENE OBJ', builtScene, 'EVENTS OBJ', builtScene.events);
+
+
+/*
+const game = Shyer.create(800, 600);
+game.preload(['level1', 'level2']);
+
+game.state({
+
+  currentLevel: 1
+
 });
 
-game.on(UPDATE_EVT, dt => {
-  if (game.keys.left) {
-    player.setCurrentClip('moveLeftClip');
-    player.x -= player.speed * dt;
+game.scene('level1', {
+
+  load() {
+    
+    this.loadImage('player', 'assets/img/player.png');
+    this.loadImage('coin', 'assets/img/coin.png');
+
+  },
+
+  start() {
+
+    this.player = this.sprite('player').size(400, 300).position(30, 40);
+
+    this.coin = this.sprite('coin').size(30, 30).position(50, 50);
+
+    this.coinCount = 0;
+
+  },
+
+  update() {
+
+    this.collide(this.player, this.coin, function(player, coin) {
+
+      this.emit('addCoin', 1);
+      coin.destroy();
+
+    });
+  
   }
 
-  if (game.keys.right) {
-    player.setCurrentClip('moveRightClip');
-    player.x += player.speed * dt;
+});
+
+game.addEvent('level1', 'addCoin', function(value) {
+  
+  this.coinCount += value;
+  if (this.coinCount > 10) {
+
+    this.emit('nextLevel');
+
+  }
+ 
+});
+
+game.addGlobalEvent('nextLevel', function() {
+
+  if (this.state.currentLevel === 1) {
+    this.changeScene('level2', true); // change scene to level1 scene and preserve the loaded assets.
   }
 
-  if (game.keys.up) {
-    player.setCurrentClip('moveUpClip');
-    player.y -= player.speed * dt;
-  }
-
-  if (game.keys.down) {
-    player.setCurrentClip('moveDownClip');
-    player.y += player.speed * dt;
-  }
 });
 
-game.on(UPDATE_EVT, dt => {
-  camera.update(dt);
-  camera.follow(player, 300, 200);
+game.scene('level2', {
+
+  load() {
+
+  },
+
+  start() {
+
+  },
+
+  update() {
+
+  },
+
 });
 
-game.on(UPDATE_EVT, dt => {
-  collideWith(
-    player,
-    obstacle,
-    () => {
-      console.log('collision!');
-      obstacle.visible = false;
-    },
-    obstacle.visible
-  );
-});
-
-game.on(RENDER_EVT, ({ ctx, cache }) => {
-  camera.render([obstacle], renderSprite, ctx, cache);
-  camera.render([player], renderAnimatedSprite, ctx, cache);
-});
+*/
