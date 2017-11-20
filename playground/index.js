@@ -1,16 +1,35 @@
-import SceneFactory from '../src/core/scene';
+import { scene, scenes } from '../src/core/shyer';
 
-const game = {
-  name: 'Cam'
-};
 
-const scene = {
+scene('level1', {
 
-};
+  load: function() {
+    this.coinCount = 5;
+  },
 
-const builtScene = SceneFactory(game, scene);
+  start: function() {
+    console.log(this.getCoins());
+    console.log(this.name);
+  },
 
-console.log('SCENE OBJ', builtScene, 'EVENTS OBJ', builtScene.events);
+  getCoins: function() {
+    this.name = 'cam';
+    return 'Coins ' + this.coinCount;
+  }
+
+});
+
+scenes['level1'].load();
+scenes['level1'].start();
+
+scenes['level1'].listen('on-coin-grabbed', function(value) {
+
+  console.log('THISSSS', this);
+
+  return 1;
+
+});
+
 
 
 /*

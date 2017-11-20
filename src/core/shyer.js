@@ -1,8 +1,10 @@
+import SceneFactory from './scene';
+
 const globalEvents = {
 
 };
 
-const scenes = {
+export const scenes = {
 
 };
 
@@ -11,11 +13,14 @@ const store = {
 
 };
 
-let gameInstance = {
-
-};
 
 function Game(width, height) {
+
+}
+
+export function scene(id, sceneObject) {
+
+  scenes[id] = SceneFactory(sceneObject);
 
 }
 
@@ -31,15 +36,15 @@ function preload(scenes = []) {
 
 }
 
-function addEvent(sceneName, eventName, fn) {
-
-}
-
 function addGlobalEvent(eventName, fn) {
 
 }
 
 function changeScene(sceneName, preserveAssets) {
+  
+}
+
+function send(eventName, fn) {
   
 }
 
