@@ -1,35 +1,18 @@
-import { scene, scenes } from '../src/core/shyer';
+import { Create } from '../src/core/shyer';
 
 
-scene('level1', {
+const game = Create(800, 600);
 
-  load: function() {
-    this.coinCount = 5;
-  },
 
-  start: function() {
-    console.log(this.getCoins());
-    console.log(this.name);
-  },
+game.scene('level1', {
 
-  getCoins: function() {
-    this.name = 'cam';
-    return 'Coins ' + this.coinCount;
+  load() {
+    this.loadImage('cat', 'boredcat.png');
   }
 
 });
 
-scenes['level1'].load();
-scenes['level1'].start();
-
-scenes['level1'].listen('on-coin-grabbed', function(value) {
-
-  console.log('THISSSS', this);
-
-  return 1;
-
-});
-
+game.preload(['level1']);
 
 
 /*

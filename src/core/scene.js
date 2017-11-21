@@ -1,7 +1,3 @@
-const events = {};
-
-const cache = {};
-
 function SceneFactory(sceneObject) {
 
   let scene = ['load', 'start', 'update'].reduce((accum, key) => {
@@ -9,38 +5,65 @@ function SceneFactory(sceneObject) {
     return accum;
   }, sceneObject);
 
+  const events = {};
+  const cache = {};
+  const loadPromises = [];
+
+  let loadCounter = 0;
+
   function loadImage(id, src) {
+    const imagePromise = new Promise((resolve, reject) => {
+      const asset = new Image();
+      asset.src = src;
+      asset[onload] = () => {
+        cache['images'][resId] = asset;
+        resolve(asset);
+      };
+      asset.onerror = () => reject(src);
+    });
 
+    loadPromises.push(imagePromise);
     
-  }
+    loadCounter++;
 
+    console.log(loadPromises, loadCounter);
+  }
+  
   function loadAudio(id, src) {
-    
-  }
 
+  }
+  
   function listen(name, callback) {
-
     callback = (callback || function () {}).bind(scene);
-    if (!events[name]) {
-      events[name] = [];
+    if (!scene.events[name]) {
+      scene.events[name] = [];
     }
-
-    events[name].push(callback);
-
-    callback();
-
+    scene.events[name].push(callback);
   }
 
-  Object.defineProperty(scene, 'listen', {
-
+  Object.defineProperty(scene, 'events', {
+    
     get: function() {
-      return listen.bind(this);
+      return events;
     }
 
   });
 
-  return scene;
+  Object.defineProperty(scene, 'listen', {
 
+    get: function() {
+      return listen;
+    }
+
+  });
+
+  Object.defineProperty(scene, 'loadImage', {
+    get: function() {
+      return loadImage;
+    }
+  });
+
+  return scene;
 }
 
 export default SceneFactory;

@@ -4,36 +4,46 @@ const globalEvents = {
 
 };
 
-export const scenes = {
+const scenes = {
 
 };
 
 const store = {
 
-
 };
 
 
-function Game(width, height) {
+function create(width, height) {
 
 }
 
-export function scene(id, sceneObject) {
+function start() {
 
+}
+
+function scene(id, sceneObject) {
   scenes[id] = SceneFactory(sceneObject);
-
 }
 
 function state(store) {
 
 }
 
-function create(width, height) {
+function preload(scenesIds = [], fallbackScene) {
+  
+  scenesIds.forEach((sceneId) => {
 
-}
+    const sceneObj = scenes[sceneId];
 
-function preload(scenes = []) {
+    console.log(scenes, sceneObj);
 
+    if (sceneObj) {
+      sceneObj.load();
+    } else {
+      console.warn(`scene ${sceneId} not found!`);
+    }
+
+  });
 }
 
 function addGlobalEvent(eventName, fn) {
