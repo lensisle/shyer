@@ -1,38 +1,37 @@
+import { initCanvas } from './initialize';
+
+const globalEvents = {};
+const scenes = {};
+const store = {};
+
+function Shyer(options) {
+  if (!(this instanceof Shyer)) {
+    console.warn('Shyer must be initialized with the keyword `new`');
+  } else {
+    this._initialize(options);
+  }
+}
+
+initCanvas(Shyer);
+
+export default Shyer;
+
+// ---------------------------------
+
 import SceneFactory from './scene';
 
-const globalEvents = {
+function create(width, height) {}
 
-};
-
-const scenes = {
-
-};
-
-const store = {
-
-};
-
-
-function create(width, height) {
-
-}
-
-function start() {
-
-}
+function start() {}
 
 function scene(id, sceneObject) {
   scenes[id] = SceneFactory(sceneObject);
 }
 
-function state(store) {
-
-}
+function state(store) {}
 
 function preload(scenesIds = [], fallbackScene) {
-  
-  scenesIds.forEach((sceneId) => {
-
+  scenesIds.forEach(sceneId => {
     const sceneObj = scenes[sceneId];
 
     console.log(scenes, sceneObj);
@@ -42,22 +41,14 @@ function preload(scenesIds = [], fallbackScene) {
     } else {
       console.warn(`scene ${sceneId} not found!`);
     }
-
   });
 }
 
-function addGlobalEvent(eventName, fn) {
+function addGlobalEvent(eventName, fn) {}
 
-}
+function changeScene(sceneName, preserveAssets) {}
 
-function changeScene(sceneName, preserveAssets) {
-  
-}
-
-function send(eventName, fn) {
-  
-}
-
+function send(eventName, fn) {}
 
 /*
 export function Game(width, height) {

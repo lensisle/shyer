@@ -1,19 +1,11 @@
-import { Create } from '../src/core/shyer';
+import Shyer from '../src/core/shyer';
 
-
-const game = Create(800, 600);
-
-
-game.scene('level1', {
-
-  load() {
-    this.loadImage('cat', 'boredcat.png');
-  }
-
+const game = new Shyer({
+  width: 800,
+  height: 600,
+  el: '#container',
+  bgColor: 'pink'
 });
-
-game.preload(['level1']);
-
 
 /*
 const game = Shyer.create(800, 600);
