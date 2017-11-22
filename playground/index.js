@@ -4,8 +4,10 @@ const game = new Shyer({
   width: 800,
   height: 600,
   el: '#container',
-  bgColor: 'pink'
+  bgColor: 'green'
 });
+
+console.log(game);
 
 /*
 const game = Shyer.create(800, 600);

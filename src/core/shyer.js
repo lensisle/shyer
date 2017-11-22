@@ -1,4 +1,4 @@
-import { initCanvas } from './initialize';
+import { initMixin, mixState, mixAPI } from './initialize';
 
 const globalEvents = {};
 const scenes = {};
@@ -12,7 +12,9 @@ function Shyer(options) {
   }
 }
 
-initCanvas(Shyer);
+initMixin(Shyer);
+mixState(Shyer);
+mixAPI(Shyer);
 
 export default Shyer;
 
