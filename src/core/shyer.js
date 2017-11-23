@@ -1,8 +1,9 @@
-import { initMixin, mixState, mixAPI, mixLifecycle } from './initialize';
-
-const globalEvents = {};
-const scenes = {};
-const store = {};
+import {
+  initMixin,
+  mixState,
+  mixAPI,
+  mixLifecycle
+} from './initialize';
 
 function Shyer(options, scenes = []) {
   if (!(this instanceof Shyer)) {
@@ -18,40 +19,6 @@ mixAPI(Shyer);
 mixLifecycle(Shyer);
 
 export default Shyer;
-
-// ---------------------------------
-
-import SceneFactory from './scene';
-
-function create(width, height) {}
-
-function start() {}
-
-function scene(id, sceneObject) {
-  scenes[id] = SceneFactory(sceneObject);
-}
-
-function state(store) {}
-
-function preload(scenesIds = [], fallbackScene) {
-  scenesIds.forEach(sceneId => {
-    const sceneObj = scenes[sceneId];
-
-    console.log(scenes, sceneObj);
-
-    if (sceneObj) {
-      sceneObj.load();
-    } else {
-      console.warn(`scene ${sceneId} not found!`);
-    }
-  });
-}
-
-function addGlobalEvent(eventName, fn) {}
-
-function changeScene(sceneName, preserveAssets) {}
-
-function send(eventName, fn) {}
 
 /*
 export function Game(width, height) {
