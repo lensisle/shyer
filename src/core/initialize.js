@@ -1,5 +1,6 @@
 import createCanvas from './canvas';
 import loadScenes from './scene';
+import requestAnimationFrame from '../utils/requestAnimationFrame';
 
 export function initMixin(Shyer) {
   Shyer.prototype._initialize = function(options, scenes) {
@@ -28,7 +29,9 @@ export function mixState(Shyer) {
   const globalEvents = {};
   const store = {};
   const scenes = {};
+
   let currentSceneName = '';
+  let gamePaused = false; 
 
   Object.defineProperty(Shyer.prototype, '_globalEvents', {
     get: function () {
@@ -61,11 +64,27 @@ export function mixState(Shyer) {
     }
 
   });
+
+  Object.defineProperty(Shyer.prototype, '_gamePaused', {
+    
+    get: function() {
+      return gamePaused;
+    },
+
+    set: function(value) {
+      gamePaused = value;
+    }
+
+  });
 }
 
 export function mixAPI(Shyer) {
   Shyer.prototype.LoadScene = function(sceneObject, onLoadCallback) {
 
+  };
+
+  Shyer.prototype.Pause = function(pause) {
+    this._gamePaused = pause;
   };
 
   Shyer.prototype.AddGlobalEvent = function(eventId, callback) {
@@ -96,16 +115,36 @@ export function mixAPI(Shyer) {
 
 export function mixLifecycle(Shyer) {
 
-  Shyer.prototype._render = function () {
+  let lastFrameTime = Date.now();
+  let deltaTime = 0;
+  let requestAnimationID = 0;
 
-  };
+  function render(ctx) {
+    const currentScene = this._scenes[this._currentSceneName];
+    if (currentScene) {
 
-  Shyer.prototype._update = function() {
+      for (const sprite of currentScene.sprites.Keys()) {
+        sprite.render(ctx);
+      }
 
-  };
+    }
+  }
+
+  function update() {
+
+  }
 
   Shyer.prototype._clearScreen = function() {
     const { width, height } = this._dimensions;
     this._ctx.fillRect(0, 0, width, height);
   };
+
+  Shyer.prototype._gameLoop = function() {
+    const now = Date.now();
+    deltaTime = (now - lastFrameTime) / 1000.0;
+    update(deltaTime);
+    render(this._ctx);
+    lastFrameTime = now;
+    requestAnimationID = !this._gamePaused ? requestAnimationFrame(this._gameLoop) : -1;
+  }
 }

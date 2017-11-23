@@ -56,6 +56,9 @@ function SceneFactory(sceneObject) {
     audios: {}
   };
 
+  const sprites = {};
+  const audioObjects = {};
+
   let loadCount = 0;
   let loadedCount = 0;
 
@@ -120,6 +123,12 @@ function SceneFactory(sceneObject) {
   Object.defineProperty(scene, 'loadImage', {
     get: function() {
       return loadImage;
+    }
+  });
+
+  Object.defineProperty(scene, 'loadAudio', {
+    get: function() {
+      return loadAudio;
     }
   });
 
