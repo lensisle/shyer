@@ -3,7 +3,7 @@ const audioPromises = [];
 
 async function showPreloadImage(preloadImage) {
 
-  const { src, width, height } = preloadImage;
+  const { src, width = 300, height = 300 } = preloadImage;
 
   const preloadPromise = new Promise((resolve, reject) => {
     const preloadImage = new Image();
@@ -40,7 +40,7 @@ export default async function loadScenes(scenes, preloadImage) {
 
   }
 
-  return await Promise.all([imagePromises, audioPromises]);
+  return Promise.all([...imagePromises, ...audioPromises]);
 }
 
 function SceneFactory(sceneObject) {

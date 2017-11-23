@@ -14,7 +14,6 @@ const game = new Shyer({
   width: 800,
   height: 600,
   el: '#container',
-  bgColor: 'white',
   initScene: 'level-1'
 }, [level]);
 

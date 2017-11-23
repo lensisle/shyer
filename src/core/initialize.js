@@ -10,8 +10,9 @@ export function initMixin(Shyer) {
 
     createCanvas.call(this, options);
     loadScenes.call(this, scenes, options.preloadImage).then((result) => {
-      
+
       this._clearScreen();
+
       if (options.initScene) {
         this.ChangeScene(options.initScene);
       } else {
@@ -78,6 +79,7 @@ export function mixAPI(Shyer) {
     }
 
     const scene = this._scenes[sceneName];
+
     if (!scene.isLoaded) {
       console.error(`Scene ${sceneName} is not loaded!`);
       return;
