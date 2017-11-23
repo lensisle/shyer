@@ -1,8 +1,11 @@
+import shyerLogo64 from './shyerlogo';
+
 export default function createCanvas(options) {
   const el = options.el;
   const width = options.width || 800;
   const height = options.height || 600;
-  const bgColor = options.bgColor || '#000000';
+  const bgColor = options.bgColor || '#00D3FF';
+  const ignoreDefaultLogo = options.ignoreDefaultLogo || false;
 
   const canvas = document.createElement('canvas');
   canvas['id'] = 'shyer';
@@ -30,6 +33,20 @@ export default function createCanvas(options) {
     }
   });
 
+  Object.defineProperty(this, '_dimensions', {
+    get: function() {
+      return { width, height };
+    }
+  });
+
   this._ctx.fillStyle = this._bgColor;
   this._ctx.fillRect(0, 0, width, height);
+
+  if (!ignoreDefaultLogo) {
+    const logo = new Image();
+    logo.onload = () => {
+      this._ctx.drawImage(logo, (width * 0.5) - 125, (height * 0.5) - 175 - 40, 250, 350);
+    };
+    logo.src = shyerLogo64;
+  }
 }

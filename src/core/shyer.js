@@ -1,20 +1,21 @@
-import { initMixin, mixState, mixAPI } from './initialize';
+import { initMixin, mixState, mixAPI, mixLifecycle } from './initialize';
 
 const globalEvents = {};
 const scenes = {};
 const store = {};
 
-function Shyer(options) {
+function Shyer(options, scenes = []) {
   if (!(this instanceof Shyer)) {
     console.warn('Shyer must be initialized with the keyword `new`');
   } else {
-    this._initialize(options);
+    this._initialize(options, scenes);
   }
 }
 
 initMixin(Shyer);
 mixState(Shyer);
 mixAPI(Shyer);
+mixLifecycle(Shyer);
 
 export default Shyer;
 

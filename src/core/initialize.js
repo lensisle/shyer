@@ -1,10 +1,19 @@
 import createCanvas from './canvas';
+import loadScenes from './scene';
 
 export function initMixin(Shyer) {
-  Shyer.prototype._initialize = function(options) {
+  Shyer.prototype._initialize = function(options, scenes) {
     
-    createCanvas.call(this, options);
+    if (options.preloadImage) {
+      options.ignoreDefaultLogo = true;
+    }
 
+    createCanvas.call(this, options);
+    loadScenes.call(this, scenes, options.preloadImage).then((result) => {
+      
+      this._clearScreen();
+
+    });
   };
 }
 
@@ -37,19 +46,31 @@ export function mixAPI(Shyer) {
 
   };
 
-  Shyer.prototype.Scene = function(id, sceneObject) {
-    
-  };
-
   Shyer.prototype.AddGlobalEvent = function(eventId, callback) {
 
   };
 
-  Shyer.prototype.ChangeScene = function() {
+  Shyer.prototype.ChangeScene = function(sceneId) {
 
   };
 
   Shyer.prototype.Send = function(eventName, data) {
 
+  };
+}
+
+export function mixLifecycle(Shyer) {
+
+  Shyer.prototype._render = function () {
+
+  };
+
+  Shyer.prototype._update = function() {
+
+  };
+
+  Shyer.prototype._clearScreen = function() {
+    const { width, height } = this._dimensions;
+    this._ctx.fillRect(0, 0, width, height);
   };
 }

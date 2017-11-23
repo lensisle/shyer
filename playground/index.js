@@ -1,13 +1,21 @@
 import Shyer from '../src/core/shyer';
 
+const level = {
+  name: 'level-1',
+  load: function() {
+    this.loadImage('cat', 'boredcat.png');
+    this.loadImage('cat2', 'boredcat.png');
+    this.loadImage('cat3', 'boredcat.png');
+    this.loadImage('cat4', 'boredcat.png');
+  }
+};
+
 const game = new Shyer({
   width: 800,
   height: 600,
   el: '#container',
-  bgColor: 'green'
-});
-
-console.log(game);
+  bgColor: 'white'
+}, [level]);
 
 /*
 const game = Shyer.create(800, 600);
