@@ -12,6 +12,12 @@ export function initMixin(Shyer) {
     loadScenes.call(this, scenes, options.preloadImage).then((result) => {
       
       this._clearScreen();
+      if (options.initScene) {
+        this.ChangeScene(options.initScene);
+      } else {
+        const defaultSceneName = scenes[0].name || 'scene-0';
+        this.ChangeScene(defaultSceneName);
+      }
 
     });
   };
@@ -21,6 +27,7 @@ export function mixState(Shyer) {
   const globalEvents = {};
   const store = {};
   const scenes = {};
+  let currentSceneName = '';
 
   Object.defineProperty(Shyer.prototype, '_globalEvents', {
     get: function () {
@@ -39,10 +46,24 @@ export function mixState(Shyer) {
       return scenes;
     }
   });
+
+  Object.defineProperty(Shyer.prototype, '_currentSceneName', {
+    
+    get: function() {
+      return currentSceneName;
+    },
+
+    set: function(value) {
+      if (value && scenes[value]) {
+        currentSceneName = value;
+      }
+    }
+
+  });
 }
 
 export function mixAPI(Shyer) {
-  Shyer.prototype.Preload = function(scenesIds = [], fallbackScene) {
+  Shyer.prototype.LoadScene = function(sceneObject, onLoadCallback) {
 
   };
 
@@ -50,8 +71,20 @@ export function mixAPI(Shyer) {
 
   };
 
-  Shyer.prototype.ChangeScene = function(sceneId) {
+  Shyer.prototype.ChangeScene = function(sceneName) {
+    const previousScene = this._scenes[this._currentSceneName];
+    if (previousScene) {
+      previousScene.exit();
+    }
 
+    const scene = this._scenes[sceneName];
+    if (!scene.isLoaded) {
+      console.error(`Scene ${sceneName} is not loaded!`);
+      return;
+    }
+    
+    this._currentSceneName = sceneName;
+    scene.start();
   };
 
   Shyer.prototype.Send = function(eventName, data) {

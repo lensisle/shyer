@@ -56,12 +56,16 @@ function SceneFactory(sceneObject) {
     audios: {}
   };
 
+  let loadCount = 0;
+  let loadedCount = 0;
+
   function loadImage(id, src) {
     const imagePromise = new Promise((resolve, reject) => {
       const asset = new Image();
       asset.src = src;
       asset.onload = () => {
         cache['images'][id] = asset;
+        loadedCount++;
         resolve(asset);
       };
       asset.onerror = () => reject(src);
@@ -69,6 +73,7 @@ function SceneFactory(sceneObject) {
       console.error(`Error loading asset file id ${id}: ${e}`);
     });
     imagePromises.push(imagePromise);
+    loadCount++;
   }
   
   function loadAudio(id, src) {
@@ -77,6 +82,7 @@ function SceneFactory(sceneObject) {
       asset.src = src;
       asset.oncanplaythrough = () => {
         cache['audios'][id] = asset;
+        loadedCount++;
         resolve(asset);
       };
       asset.onerror = () => reject(src);
@@ -84,6 +90,7 @@ function SceneFactory(sceneObject) {
       console.error(`Error loading asset file id ${id}: ${e}`);
     });
     audioPromises.push(audioPromise);
+    loadCount++;
   }
   
   function listen(name, callback) {
@@ -115,6 +122,13 @@ function SceneFactory(sceneObject) {
       return loadImage;
     }
   });
+
+  Object.defineProperty(scene, 'isLoaded', {
+    enumerable: true,
+    get: function() {
+      return loadCount <= loadedCount;
+    }
+  })
 
   return scene;
 }
