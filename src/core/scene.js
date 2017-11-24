@@ -62,37 +62,45 @@ function SceneFactory(sceneObject) {
   let loadCount = 0;
   let loadedCount = 0;
 
+  const loadProperties = {
+    images: 'onload',
+    audios: 'oncanplaythrough'
+  };
+
+  function getLoadFunc(type, id, src) {
+    const loadProperty = loadProperties[type];
+    return function(id, src) {
+      const loadPromise = new Promise((resolve, reject) => {
+        const asset =
+          type === 'images' ? new Image() :
+          type === 'audios' ? new Audio() :
+          null;
+        if (asset === null) {
+          reject(`Wrong asset type ${type}`);
+        }  
+        asset.src = src;
+        asset[loadProperty] = () => {
+          cache[type][id] = asset;
+          loadedCount++;
+          resolve(asset);
+        };
+        asset.onerror = () => reject(src);
+      }).catch((e) => {
+        console.error(`Error loading asset file id ${id}: ${e}`);
+      });
+      return loadPromise;
+    }
+  }
+
   function loadImage(id, src) {
-    const imagePromise = new Promise((resolve, reject) => {
-      const asset = new Image();
-      asset.src = src;
-      asset.onload = () => {
-        cache['images'][id] = asset;
-        loadedCount++;
-        resolve(asset);
-      };
-      asset.onerror = () => reject(src);
-    }).catch((e) => {
-      console.error(`Error loading asset file id ${id}: ${e}`);
-    });
-    imagePromises.push(imagePromise);
+    const loadPromise = getLoadFunc('images', id, src);
+    imagePromises.push(loadPromise);
     loadCount++;
   }
   
   function loadAudio(id, src) {
-    const audioPromise = new Promise((resolve, reject) => {
-      const asset = new Audio();
-      asset.src = src;
-      asset.oncanplaythrough = () => {
-        cache['audios'][id] = asset;
-        loadedCount++;
-        resolve(asset);
-      };
-      asset.onerror = () => reject(src);
-    }).catch((e) => {
-      console.error(`Error loading asset file id ${id}: ${e}`);
-    });
-    audioPromises.push(audioPromise);
+    const loadPromise = getLoadFunc('audios', id, src);
+    audioPromises.push(loadPromise);
     loadCount++;
   }
   
