@@ -67,7 +67,7 @@ function SceneFactory(sceneObject) {
     audios: 'oncanplaythrough'
   };
 
-  function getLoadFunc(type, id, src) {
+  function getLoadFunc(type) {
     const loadProperty = loadProperties[type];
     return function(id, src) {
       const loadPromise = new Promise((resolve, reject) => {
@@ -93,13 +93,15 @@ function SceneFactory(sceneObject) {
   }
 
   function loadImage(id, src) {
-    const loadPromise = getLoadFunc('images', id, src);
+    const loadFunc = getLoadFunc('images');
+    const loadPromise = loadFunc(id, src);
     imagePromises.push(loadPromise);
     loadCount++;
   }
   
   function loadAudio(id, src) {
-    const loadPromise = getLoadFunc('audios', id, src);
+    const loadFunc = getLoadFunc('audios');
+    const loadPromise = loadFunc(id, src);
     audioPromises.push(loadPromise);
     loadCount++;
   }
