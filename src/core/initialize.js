@@ -123,10 +123,10 @@ export function mixLifecycle(Shyer) {
     const currentScene = this._scenes[this._currentSceneName];
     if (currentScene) {
 
-      for (const sprite of currentScene.sprites.Keys()) {
-        sprite.render(ctx);
+      for (const key of Object.keys(currentScene.sprites)) {
+        currentScene.sprites[key].render(ctx);
       }
-
+      
     }
   }
 
