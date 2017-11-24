@@ -99,6 +99,11 @@ export function mixAPI(Shyer) {
 
     const scene = this._scenes[sceneName];
 
+    if (!scene) {
+      console.log(`Scene ${sceneName} not found!`);
+      return;
+    }
+
     if (!scene.isLoaded) {
       console.error(`Scene ${sceneName} is not loaded!`);
       return;
