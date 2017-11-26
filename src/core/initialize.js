@@ -144,6 +144,8 @@ export function mixLifecycle(Shyer) {
       for (const key of Object.keys(currentScene.entities)) {
         currentScene.entities[key].update(dt);
       }
+
+      currentScene.update(dt);
       
     }
   }

@@ -1,34 +1,38 @@
 import keyMap from './keymap';
 
 function hasKey(key) {
-  return !!keyMap[key];
-}
-
-function createKey(key) {
-
-  const keyObject = {};
-
-  const keyCode = keyMap[key.toUpperCase()];
-  keyObject.key = key;
-  keyObject.keyCode = keyCode;
-  keyObject.pressed = false;
-
-  return keyObject;
+  let exist = false;
+  for (let keyItem of Object.values(keyMap)) {
+    if (keyItem === key) {
+      exist = true;
+      break;
+    }
+  }
+  return exist;
 }
 
 function Keyboard() {
 
-  this.keys = {};
+  const keys = {};
+
+  Object.defineProperty(this, '_keys', {
+    get: function() {
+      return keys;
+    },
+    enumerable: false
+  });
 
 }
 
-Keyboard.prototype.keys = function(keys = []) {
+Keyboard.prototype.setKeys = function(keys = []) {
 
   keys.forEach((key) => {
+    
+    const keyName = key.toLowerCase();
 
-    if (hasKey(key)) {
-      const key = createKey(key);
-      this.keys[key.keyCode] = key;
+    if (hasKey(keyName)) {
+      this._keys[keyName] = {};
+      this._keys[keyName].pressed = false;
     } else {
       console.error(`Keycode not found for key ${key}`);
     }
@@ -39,26 +43,38 @@ Keyboard.prototype.keys = function(keys = []) {
 
 Keyboard.prototype.isPressed = function(key) {
 
-  return hasKey(key) && ;
+  if (this._keys[key]) {
+    return this._keys[key].pressed;
+  }
+
+  return false;
 };
 
-const keyDownListener = (event) => {
+const keyDownListener = function(event) {
   const { keyCode } = event;
-  keyboard[keyCode].pressed = true;
+  const keyName = keyMap[keyCode];
+  const key = this.keyboard._keys[keyName];
+  if (key) {
+    key.pressed = true;
+  }
 };
 
-const keyUpListener = (event) => {
+const keyUpListener = function(event) {
   const { keyCode } = event;
-  keyboard[keyCode].pressed = false;
+  const keyName = keyMap[keyCode];
+  const key = this.keyboard._keys[keyName];
+  if (key) {
+    key.pressed = false;
+  }
 };
 
-export function initKeyboard(auto = true) {
+export function initKeyboard(keys = [], auto = true) {
 
   const keyboard = new Keyboard();
 
-  if (auto) {
+  if (auto && keys.length < 1) {
 
-    keyboard.keys([
+    keyboard.setKeys([
       'up',
       'down',
       'left',
@@ -70,14 +86,18 @@ export function initKeyboard(auto = true) {
       'esc'
     ]);
 
+  } else {
+
+    keyboard.setKeys(keys);
+
   }
 
-  window.addEventListener('keydown', keyDownListener, false);
+  window.addEventListener('keydown', keyDownListener.bind(this), false);
 
-  window.addEventListener('keyup', keyUpListener, false);
+  window.addEventListener('keyup', keyUpListener.bind(this), false);
 
   Object.defineProperty(this, 'keyboard', {
-
+    enumerable: true,
     get: function() {
       return keyboard;
     }

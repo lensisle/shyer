@@ -7,6 +7,17 @@ const level = {
     this.loadImage('cat2', 'boredcat.png');
     this.loadImage('cat3', 'boredcat.png');
     this.loadImage('cat4', 'boredcat.png');
+  },
+  start: function() {
+    this.initKeyboard(['a', 'w']);
+  },
+  update: function() {
+
+    if (this.keyboard.isPressed('a')) {
+      console.log(this.keyboard);
+      console.log('left pressed');
+    }
+
   }
 };
 

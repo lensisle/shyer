@@ -1,3 +1,5 @@
+import { initKeyboard } from './keyboard';
+
 const imagePromises = [];
 const audioPromises = [];
 
@@ -156,6 +158,11 @@ function SceneFactory(sceneObject) {
     }
   })
 
+  Object.defineProperty(scene, 'initKeyboard', {
+    get: function() {
+      return initKeyboard;
+    }
+  });
 
   return scene;
 }
