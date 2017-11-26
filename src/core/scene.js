@@ -56,7 +56,7 @@ function SceneFactory(sceneObject) {
     audios: {}
   };
 
-  const sprites = {};
+  const entitiesObjects = {};
   const audioObjects = {};
 
   let loadCount = 0;
@@ -147,7 +147,15 @@ function SceneFactory(sceneObject) {
     get: function() {
       return loadCount <= loadedCount;
     }
+  });
+
+  Object.defineProperty(scene, 'entities', {
+    enumerable: true,
+    get: function() {
+      return entitiesObjects;
+    }
   })
+
 
   return scene;
 }

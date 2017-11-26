@@ -15,11 +15,13 @@ export function initMixin(Shyer) {
       this._clearScreen();
 
       if (options.initScene) {
-        this.ChangeScene(options.initScene);
+        this.changeScene(options.initScene);
       } else {
         const defaultSceneName = scenes[0].name || 'scene-0';
-        this.ChangeScene(defaultSceneName);
+        this.changeScene(defaultSceneName);
       }
+
+      this._gameLoop();
 
     });
   };
@@ -79,19 +81,16 @@ export function mixState(Shyer) {
 }
 
 export function mixAPI(Shyer) {
-  Shyer.prototype.LoadScene = function(sceneObject, onLoadCallback) {
+  Shyer.prototype.loadScene = function(sceneObject, onLoadCallback) {
 
   };
 
-  Shyer.prototype.Pause = function(pause) {
-    this._gamePaused = pause;
-  };
-
-  Shyer.prototype.AddGlobalEvent = function(eventId, callback) {
+  Shyer.prototype.addGlobalEvent = function(eventId, callback) {
 
   };
 
-  Shyer.prototype.ChangeScene = function(sceneName) {
+  Shyer.prototype.changeScene = function(sceneName) {
+    
     const previousScene = this._scenes[this._currentSceneName];
     if (previousScene) {
       previousScene.exit();
@@ -113,8 +112,11 @@ export function mixAPI(Shyer) {
     scene.start();
   };
 
-  Shyer.prototype.Send = function(eventName, data) {
-
+  Shyer.prototype.send = function(eventName, data) {
+    const currentScene = this._scenes[this._currentSceneName];
+    currentScene.events[eventName].forEach(listener => {
+      listener(data);
+    });
   };
 }
 
@@ -128,15 +130,22 @@ export function mixLifecycle(Shyer) {
     const currentScene = this._scenes[this._currentSceneName];
     if (currentScene) {
 
-      for (const key of Object.keys(currentScene.sprites)) {
-        currentScene.sprites[key].render(ctx);
+      for (const key of Object.keys(currentScene.entities)) {
+        currentScene.entities[key].render(ctx);
       }
       
     }
   }
 
-  function update() {
+  function update(dt) {
+    const currentScene = this._scenes[this._currentSceneName];
+    if (currentScene) {
 
+      for (const key of Object.keys(currentScene.entities)) {
+        currentScene.entities[key].update(dt);
+      }
+      
+    }
   }
 
   Shyer.prototype._clearScreen = function() {
@@ -147,9 +156,11 @@ export function mixLifecycle(Shyer) {
   Shyer.prototype._gameLoop = function() {
     const now = Date.now();
     deltaTime = (now - lastFrameTime) / 1000.0;
-    update(deltaTime);
-    render(this._ctx);
+    update.call(this, deltaTime);
+    render.call(this, this._ctx);
     lastFrameTime = now;
     requestAnimationID = !this._gamePaused ? requestAnimationFrame(this._gameLoop) : -1;
   }
+
+  Shyer.prototype._gameLoop = Shyer.prototype._gameLoop.bind(Shyer.prototype);
 }

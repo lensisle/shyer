@@ -7,22 +7,7 @@ const level = {
     this.loadImage('cat2', 'boredcat.png');
     this.loadImage('cat3', 'boredcat.png');
     this.loadImage('cat4', 'boredcat.png');
-  }/*,
-  create: function() {
-
-    const keyboard = this.initKeyboard(true  auto: true );
-    // auto true will listen arrow keys plus z and x
-
-    // you can also configure custom keys
-    keyboard.keys(['a', 'd', 'w', 's', 'a', 's']);
-
-  },
-  update: function() {
-
-    if (this.keyboard.keys.a.isPressed)
-
   }
-  */
 };
 
 const game = new Shyer({
