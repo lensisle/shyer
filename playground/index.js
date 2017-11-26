@@ -1,9 +1,5 @@
 import Shyer from '../src/core/shyer';
 
-function leftPressed() {
-  console.log('left pressed');
-}
-
 const level = {
   name: 'level-1',
   load: function() {
@@ -14,9 +10,35 @@ const level = {
   },
   start: function() {
     this.initMouse();
-    // console.log(this.mouse);
+    this.initKeyboard();
   },
   update: function() {
+
+    this.mouse.click((x, y) => {
+
+      console.log('mouse clicked at', x, y);
+      this.mouse.unsubscribe();
+
+      setTimeout(() => {
+        console.log('mouse subscribed again');
+        this.initMouse();
+      }, 3000);
+
+    });
+
+    if (this.keyboard.isPressed('left')) {
+
+      console.log('keyboard pressed left!');
+
+      this.keyboard.unsubscribe();
+
+      setTimeout(() => {
+        console.log('keyboard subscribe again');
+        this.initKeyboard();
+      }, 3000);
+
+    }
+
   }
 };
 
