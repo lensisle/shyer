@@ -14,31 +14,11 @@ const level = {
   },
   update: function() {
 
-    this.mouse.click((x, y) => {
+    this.mouse.click(this.click);
 
-      console.log('mouse clicked at', x, y);
-      this.mouse.unsubscribe();
-
-      setTimeout(() => {
-        console.log('mouse subscribed again');
-        this.initMouse();
-      }, 3000);
-
-    });
-
-    if (this.keyboard.isPressed('left')) {
-
-      console.log('keyboard pressed left!');
-
-      this.keyboard.unsubscribe();
-
-      setTimeout(() => {
-        console.log('keyboard subscribe again');
-        this.initKeyboard();
-      }, 3000);
-
-    }
-
+  },
+  click: function() {
+    console.log('this', this);
   }
 };
 

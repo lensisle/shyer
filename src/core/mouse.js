@@ -21,11 +21,9 @@ function Mouse() {
 }
 
 Mouse.prototype.click = function(clickFn) {
-
   if (!this._clickFn || this._clickFn !== clickFn) {
     this._clickFn = clickFn;
   }
-
 };
 
 Mouse.prototype.unsubscribe = function() {
@@ -46,7 +44,7 @@ let onClickListener = function(event) {
 
   if (checkClickInsideCanvas(clientX, clientY, this.mouse._canvasOffset)) {
 
-    this.mouse._clickFn(this.mouse.position.x, this.mouse.position.y);
+    this.mouse._clickFn.call(this, this.mouse.position.x, this.mouse.position.y);
 
   }
 };
@@ -60,6 +58,7 @@ let onMoveListener = function(event) {
 
 let onResizeListener = function(event) {
   event.preventDefault();
+  const canvas = document.querySelector('#shyer');
   this.mouse._canvasOffset = canvas.getBoundingClientRect();
 };
 
