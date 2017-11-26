@@ -1,4 +1,5 @@
 import { initKeyboard } from './keyboard';
+import { initMouse } from './mouse';
 
 const imagePromises = [];
 const audioPromises = [];
@@ -136,6 +137,12 @@ function SceneFactory(sceneObject) {
   Object.defineProperty(scene, 'initKeyboard', {
     get: function() {
       return initKeyboard;
+    }
+  });
+
+  Object.defineProperty(scene, 'initMouse', {
+    get: function() {
+      return initMouse;
     }
   });
 

@@ -13,16 +13,10 @@ const level = {
     this.loadImage('cat4', 'boredcat.png');
   },
   start: function() {
-    this.initKeyboard();
+    this.initMouse();
+    // console.log(this.mouse);
   },
   update: function() {
-
-    if (this.keyboard.isPressed('left')) {
-      console.log('left pressed');
-      this.keyboard.unsubscribe();
-      
-    }
-
   }
 };
 
