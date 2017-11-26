@@ -66,6 +66,7 @@ Keyboard.prototype.unsubscribe = function() {
 };
 
 let keyDownListener = function(event) {
+  event.preventDefault();
   const { keyCode } = event;
   const key = getKey(this.keyboard, keyCode);
   if (key) {
@@ -74,6 +75,7 @@ let keyDownListener = function(event) {
 };
 
 let keyUpListener = function(event) {
+  event.preventDefault();
   const { keyCode } = event;
   const key = getKey(this.keyboard, keyCode);
   if (key) {
