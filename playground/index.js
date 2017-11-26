@@ -1,5 +1,9 @@
 import Shyer from '../src/core/shyer';
 
+function leftPressed() {
+  console.log('left pressed');
+}
+
 const level = {
   name: 'level-1',
   load: function() {
@@ -9,17 +13,19 @@ const level = {
     this.loadImage('cat4', 'boredcat.png');
   },
   start: function() {
-    this.initKeyboard(['a', 'w']);
+    this.initKeyboard();
   },
   update: function() {
 
-    if (this.keyboard.isPressed('a')) {
-      console.log(this.keyboard);
+    if (this.keyboard.isPressed('left')) {
       console.log('left pressed');
+      this.keyboard.unsubscribe();
+      
     }
 
   }
 };
+
 
 const game = new Shyer({
   width: 800,

@@ -11,6 +11,11 @@ function hasKey(key) {
   return exist;
 }
 
+function getKey(keyboard, keyCode) {
+  const keyName = keyMap[keyCode];
+  return keyboard._keys[keyName];
+}
+
 function Keyboard() {
 
   const keys = {};
@@ -50,19 +55,27 @@ Keyboard.prototype.isPressed = function(key) {
   return false;
 };
 
-const keyDownListener = function(event) {
+Keyboard.prototype.unsubscribe = function() {
+
+  window.removeEventListener('keydown', keyDownListener);
+  window.removeEventListener('keyup', keyUpListener);
+
+  for (let key of Object.values(this._keys)) {
+    key.pressed = false;
+  }
+};
+
+let keyDownListener = function(event) {
   const { keyCode } = event;
-  const keyName = keyMap[keyCode];
-  const key = this.keyboard._keys[keyName];
+  const key = getKey(this.keyboard, keyCode);
   if (key) {
     key.pressed = true;
   }
 };
 
-const keyUpListener = function(event) {
+let keyUpListener = function(event) {
   const { keyCode } = event;
-  const keyName = keyMap[keyCode];
-  const key = this.keyboard._keys[keyName];
+  const key = getKey(this.keyboard, keyCode);
   if (key) {
     key.pressed = false;
   }
@@ -92,22 +105,19 @@ export function initKeyboard(keys = [], auto = true) {
 
   }
 
-  window.addEventListener('keydown', keyDownListener.bind(this), false);
+  keyDownListener = keyDownListener.bind(this);
+  keyUpListener = keyUpListener.bind(this);
 
-  window.addEventListener('keyup', keyUpListener.bind(this), false);
+  window.addEventListener('keydown', keyDownListener, false);
+
+  window.addEventListener('keyup', keyUpListener, false);
 
   Object.defineProperty(this, 'keyboard', {
     enumerable: true,
     get: function() {
       return keyboard;
     }
-
   });
 
   return keyboard;
-}
-
-export function unsubscribeKeyboard() {
-  window.removeEventListener('keydown', keyDownListener);
-  window.removeEventListener('keyup', keyUpListener);
 }

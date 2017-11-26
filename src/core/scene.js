@@ -52,7 +52,6 @@ function SceneFactory(sceneObject) {
     return accum;
   }, sceneObject);
 
-  const events = {};
   const cache = {
     images: {},
     audios: {}
@@ -107,30 +106,6 @@ function SceneFactory(sceneObject) {
     audioPromises.push(loadPromise);
     loadCount++;
   }
-  
-  function listen(name, callback) {
-    callback = (callback || function () {}).bind(scene);
-    if (!scene.events[name]) {
-      scene.events[name] = [];
-    }
-    scene.events[name].push(callback);
-  }
-
-  Object.defineProperty(scene, 'events', {
-    
-    get: function() {
-      return events;
-    }
-
-  });
-
-  Object.defineProperty(scene, 'listen', {
-
-    get: function() {
-      return listen;
-    }
-
-  });
 
   Object.defineProperty(scene, 'loadImage', {
     get: function() {

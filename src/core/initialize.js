@@ -111,13 +111,6 @@ export function mixAPI(Shyer) {
     this._currentSceneName = sceneName;
     scene.start();
   };
-
-  Shyer.prototype.send = function(eventName, data) {
-    const currentScene = this._scenes[this._currentSceneName];
-    currentScene.events[eventName].forEach(listener => {
-      listener(data);
-    });
-  };
 }
 
 export function mixLifecycle(Shyer) {
