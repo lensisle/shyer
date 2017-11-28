@@ -12,9 +12,7 @@ function Mouse() {
   
   const canvas = document.querySelector('#shyer');
   this._canvasOffset = canvas.getBoundingClientRect();
-
-  console.log(this._canvasOffset);
-
+  
   this.clickEvents = {};
 }
 

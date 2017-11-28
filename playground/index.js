@@ -14,7 +14,10 @@ const level = {
   },
   start: function() {
     this.initMouse();
-    // console.log(this.mouse);
+    //this.cat2 = this.sprite.createPattern('cat')
+    //this.cat = this.sprite.createStretched('cat', 50, 150, 600, 400);
+    this.cat2 = this.sprite.create('cat4', 100, 100);
+    console.log(this);
   },
   update: function() {
   }

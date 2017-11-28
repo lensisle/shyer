@@ -1,5 +1,6 @@
 import { initKeyboard } from './keyboard';
 import { initMouse } from './mouse';
+import { createSpriteFactory } from './sprite';
 
 const imagePromises = [];
 const audioPromises = [];
@@ -53,13 +54,18 @@ function SceneFactory(sceneObject) {
     return accum;
   }, sceneObject);
 
+  Object.defineProperty(scene, '_ctx', {
+    configurable: true,
+    value: null
+  });
+
   const cache = {
     images: {},
     audios: {}
   };
 
-  const entitiesObjects = {};
-  const audioObjects = {};
+  const entitiesObjects = [];
+  const audioObjects = [];
 
   let loadCount = 0;
   let loadedCount = 0;
@@ -94,6 +100,8 @@ function SceneFactory(sceneObject) {
     }
   }
 
+  const spriteFactory = createSpriteFactory(cache, entitiesObjects);
+
   function loadImage(id, src) {
     const loadFunc = getLoadFunc('images');
     const loadPromise = loadFunc(id, src);
@@ -127,8 +135,7 @@ function SceneFactory(sceneObject) {
     }
   });
 
-  Object.defineProperty(scene, 'entities', {
-    enumerable: true,
+  Object.defineProperty(scene, '_entities', {
     get: function() {
       return entitiesObjects;
     }
@@ -143,6 +150,12 @@ function SceneFactory(sceneObject) {
   Object.defineProperty(scene, 'initMouse', {
     get: function() {
       return initMouse;
+    }
+  });
+
+  Object.defineProperty(scene, 'sprite', {
+    get: function() {
+      return spriteFactory;
     }
   });
 

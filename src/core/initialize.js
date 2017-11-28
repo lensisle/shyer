@@ -28,24 +28,10 @@ export function initMixin(Shyer) {
 }
 
 export function mixState(Shyer) {
-  const globalEvents = {};
-  const store = {};
   const scenes = {};
 
   let currentSceneName = '';
   let gamePaused = false; 
-
-  Object.defineProperty(Shyer.prototype, '_globalEvents', {
-    get: function () {
-      return globalEvents;
-    }
-  });
-
-  Object.defineProperty(Shyer.prototype, '_store', {
-    get: function() {
-      return store;
-    }
-  });
 
   Object.defineProperty(Shyer.prototype, '_scenes', {
     get: function() {
@@ -85,10 +71,6 @@ export function mixAPI(Shyer) {
 
   };
 
-  Shyer.prototype.addGlobalEvent = function(eventId, callback) {
-
-  };
-
   Shyer.prototype.changeScene = function(sceneName) {
     
     const previousScene = this._scenes[this._currentSceneName];
@@ -109,6 +91,13 @@ export function mixAPI(Shyer) {
     }
     
     this._currentSceneName = sceneName;
+
+    if (!scene._ctx) {
+      Object.defineProperty(scene, '_ctx', {
+        value: this._ctx
+      });
+    }
+
     scene.start();
   };
 }
@@ -119,12 +108,13 @@ export function mixLifecycle(Shyer) {
   let deltaTime = 0;
   let requestAnimationID = 0;
 
-  function render(ctx) {
+  function render() {
     const currentScene = this._scenes[this._currentSceneName];
     if (currentScene) {
 
-      for (const key of Object.keys(currentScene.entities)) {
-        currentScene.entities[key].render(ctx);
+      for (const entity of currentScene._entities) {
+        entity.render();
+        console.log(entity.render);
       }
       
     }
@@ -134,8 +124,8 @@ export function mixLifecycle(Shyer) {
     const currentScene = this._scenes[this._currentSceneName];
     if (currentScene) {
 
-      for (const key of Object.keys(currentScene.entities)) {
-        currentScene.entities[key].update(dt);
+      for (const entity of currentScene._entities) {
+        entity.update(dt);
       }
 
       currentScene.update(dt);
@@ -152,7 +142,7 @@ export function mixLifecycle(Shyer) {
     const now = Date.now();
     deltaTime = (now - lastFrameTime) / 1000.0;
     update.call(this, deltaTime);
-    render.call(this, this._ctx);
+    render.call(this);
     lastFrameTime = now;
     requestAnimationID = !this._gamePaused ? requestAnimationFrame(this._gameLoop) : -1;
   }
