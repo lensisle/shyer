@@ -14,6 +14,11 @@ export default function createCanvas(options) {
   canvas['tabIndex'] = 1000;
   canvas['style']['outline'] = 'none';
 
+  document.oncontextmenu = function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   const targetNode = document.querySelector(el);
   if (targetNode) {
     targetNode.appendChild(canvas);

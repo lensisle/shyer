@@ -1,9 +1,5 @@
 import Shyer from '../src/core/shyer';
 
-function leftPressed() {
-  console.log('left pressed');
-}
-
 const level = {
   name: 'level-1',
   load: function() {
@@ -20,6 +16,12 @@ const level = {
     console.log(this);
   },
   update: function() {
+
+    this.mouse.click(this.click);
+
+  },
+  click: function() {
+    console.log('this', this);
   }
 };
 

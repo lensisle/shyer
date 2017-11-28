@@ -116,6 +116,7 @@ export function initKeyboard(keys = [], auto = true) {
 
   Object.defineProperty(this, 'keyboard', {
     enumerable: true,
+    configurable: true,
     get: function() {
       return keyboard;
     }
