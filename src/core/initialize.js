@@ -112,13 +112,9 @@ export function mixLifecycle(Shyer) {
     const currentScene = this._scenes[this._currentSceneName];
     if (currentScene) {
 
-      ctx.save();
-
       for (const entity of currentScene._entities) {
         entity.render(ctx);
       }
-
-      ctx.restore();
       
     }
   }

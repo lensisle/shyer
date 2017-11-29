@@ -10,12 +10,23 @@ const level = {
   },
   start: function() {
     this.initMouse();
-    this.catTiled = this.sprite.createTiled('cat',50, 50, 100, 100);
+    this.initKeyboard();
+
+    this.catTiled2 = this.sprite.create('cat2', 150, 50);
+
+    this.catTiled = this.sprite.create('cat',50, 50);
+    this.catTiled.setAnchors(0.5, 0.5);
+
+    
   },
   update: function(dt) {
 
     this.mouse.click(this.click);
     this.catTiled.position = this.mouse.position;
+
+    if (this.keyboard.isPressed('left')) {
+      this.catTiled.rotate(10);
+    }
 
   },
   click: function() {
