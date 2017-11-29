@@ -1,6 +1,6 @@
 import { initKeyboard } from './keyboard';
 import { initMouse } from './mouse';
-import { createSpriteFactory } from './sprite';
+import { SpriteFactory } from './sprite';
 
 const imagePromises = [];
 const audioPromises = [];
@@ -100,8 +100,6 @@ function SceneFactory(sceneObject) {
     }
   }
 
-  const spriteFactory = createSpriteFactory(cache, entitiesObjects);
-
   function loadImage(id, src) {
     const loadFunc = getLoadFunc('images');
     const loadPromise = loadFunc(id, src);
@@ -152,6 +150,8 @@ function SceneFactory(sceneObject) {
       return initMouse;
     }
   });
+
+  const spriteFactory = SpriteFactory.call(scene, cache, entitiesObjects);
 
   Object.defineProperty(scene, 'sprite', {
     get: function() {

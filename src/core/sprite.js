@@ -1,68 +1,89 @@
-import { Math } from "core-js/library/web/timers";
+function getAssetImg(cache, id, imgRef) {
+  if (!cache['images'][id]) {
+    console.error(`Asset with id ${id} not found`);
+    return null;
+  }
+  return cache['images'][id];
+}
 
-function toDegrees(radians) {
-  return Math.PI / 180;
-} 
+export function SpriteFactory(cache, store) {
 
-function Sprite(img, x, y) {
+  return {
+
+    create: function(id, x ,y) {
+
+      const img = getAssetImg(cache, id);
+      if (img) {
+
+        const sprite = new Sprite(img, x, y);
+        store.push(sprite);
+        return sprite;
+      }
+
+    },
+    createStretched: function(id, x, y, width, height) {
+
+      const img = getAssetImg(cache, id);
+      if (img) {
+
+        const sprite = new Sprite(img, x, y, width, height);
+        store.push(sprite);
+        return sprite;
+      }
+
+    },
+    createTiled: (id, x, y, width, height) => {
+
+      const img = getAssetImg(cache, id);
+      if (img) {
+
+        const pattern = this._ctx.createPattern(img, 'repeat');
+        const sprite = new Sprite(img, x, y, width, height, pattern);
+
+        store.push(sprite);
+
+        return sprite;
+      }
+      
+    }
+
+  }  
+
+}
+
+function Sprite(img, x = 0, y = 0, width, height, pattern) {
+
   this.img = img;
 
   this.position = {
-    x,
+    x, 
     y
   };
+
+  this.anchors = {
+    x: 0,
+    y: 0
+  };
+
+  this.width = width || img.width;
+  this.height = height || img.height;
+
+  this.pattern = pattern || null;
+
+  this.rotation = 0;
 }
 
-Sprite.prototype.update = function update(dt) {
+Sprite.prototype.render = function (ctx) {
 
-};
+  if (this.pattern) {
 
-Sprite.prototype.render = function render() {
+    ctx.fillStyle = this.pattern;
+    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
 
-};
-
-export function createSpriteFactory(cache, store) {
-
-  function SpriteFactory() {
-    
-    function create(id, x, y) {
-
-      const img = cache['images'][id];
-      if (!img) {
-        console.error(`Error creating sprite with id ${id}, asset not found`);
-        return;
-      }
-
-      const sprite = new Sprite(img, x, y);
-      store.push(sprite);
-
-      return sprite;
-    }
-
-    function createPattern(id, x, y, width, height) {
-
-    }
-
-    function createStretched(id, x, y, width, height) {
-
-    }
-
-    Object.defineProperties(this,
-      {
-        'create': {
-          value: create
-        },
-        'createPattern': {
-          value: createPattern
-        },
-        'createStretched': {
-          value: createStretched
-        }
-      }
-    );
-
-    return this;
   }
 
-  return new SpriteFactory();
-}
+};
+
+Sprite.prototype.update = function(dt) {
+
+};

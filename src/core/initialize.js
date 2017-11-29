@@ -12,14 +12,14 @@ export function initMixin(Shyer) {
     createCanvas.call(this, options);
     loadScenes.call(this, scenes, options.preloadImage).then((result) => {
 
-      this._clearScreen();
-
       if (options.initScene) {
         this.changeScene(options.initScene);
       } else {
         const defaultSceneName = scenes[0].name || 'scene-0';
         this.changeScene(defaultSceneName);
       }
+
+      Shyer.prototype._gameLoop = Shyer.prototype._gameLoop.bind(this);
 
       this._gameLoop();
 
@@ -108,13 +108,12 @@ export function mixLifecycle(Shyer) {
   let deltaTime = 0;
   let requestAnimationID = 0;
 
-  function render() {
+  function render(ctx) {
     const currentScene = this._scenes[this._currentSceneName];
     if (currentScene) {
 
       for (const entity of currentScene._entities) {
-        entity.render();
-        console.log(entity.render);
+        entity.render(ctx);
       }
       
     }
@@ -139,13 +138,12 @@ export function mixLifecycle(Shyer) {
   };
 
   Shyer.prototype._gameLoop = function() {
+    this._clearScreen();
     const now = Date.now();
     deltaTime = (now - lastFrameTime) / 1000.0;
     update.call(this, deltaTime);
-    render.call(this);
+    render.call(this, this._ctx);
     lastFrameTime = now;
     requestAnimationID = !this._gamePaused ? requestAnimationFrame(this._gameLoop) : -1;
-  }
-
-  Shyer.prototype._gameLoop = Shyer.prototype._gameLoop.bind(Shyer.prototype);
+  };
 }
