@@ -10,16 +10,12 @@ const level = {
   },
   start: function() {
     this.initMouse();
-    //this.cat2 = this.sprite.createPattern('cat')
-    //this.cat = this.sprite.createStretched('cat', 50, 150, 600, 400);
-    //this.cat2 = this.sprite.create('cat4', 100, 100);
-    this.cat = this.sprite.create('cat', 100, 100);
-    this.catStretched = this.sprite.createStretched('cat', 100, 100, 400, 600);
-    this.catTiled = this.sprite.createTiled('cat',50, 50, 1000, 1000);
+    this.catTiled = this.sprite.createTiled('cat',50, 50, 100, 100);
   },
-  update: function() {
+  update: function(dt) {
 
     this.mouse.click(this.click);
+    this.catTiled.position = this.mouse.position;
 
   },
   click: function() {

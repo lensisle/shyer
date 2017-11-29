@@ -80,6 +80,9 @@ Sprite.prototype.render = function (ctx) {
     ctx.fillStyle = this.pattern;
     ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
 
+  } else {
+    
+
   }
 
 };
