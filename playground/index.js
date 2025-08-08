@@ -85,7 +85,7 @@ game.on(LOAD_COMPLETE_EVT, () => {
   totalEntities += 2;
 
   // Spawn a lot of moving sprites to demonstrate batching + culling
-  const COUNT = 2000;
+  const COUNT = 20000;
   for (let i = 0; i < COUNT; i++) {
     const s = createSprite(
       "e" + i,
@@ -136,9 +136,13 @@ game.on(LOAD_COMPLETE_EVT, () => {
     // For demo simplicity, assume roughly proportional to view/world area
     const ratio = (view.width * view.height) / (sw * sh);
     visible = Math.max(2, Math.floor(totalEntities * ratio));
+    const pvis =
+      typeof particles.getVisibleCount === "function"
+        ? particles.getVisibleCount()
+        : 0;
     hud.textContent = `FPS: ${smoothedFps.toFixed(
       1
-    )} | Entities: ${totalEntities} | Approx Visible: ${visible} | Zoom: ${zoomLevel().toFixed(
+    )} | Entities: ${totalEntities} | Approx Visible: ${visible} | Particles Visible: ${pvis} | Zoom: ${zoomLevel().toFixed(
       2
     )} | Player: (${Math.round(player?.x ?? 0)}, ${Math.round(
       player?.y ?? 0

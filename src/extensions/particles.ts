@@ -35,6 +35,7 @@ export function createParticles(options: ParticlesOptions) {
     glBatch: any; // SpriteBatch
   };
   const batches: Batch[] = [];
+  let lastVisibleCount = 0;
 
   function start(game: any, cacheRef: any) {
     cache = cacheRef;
@@ -48,35 +49,70 @@ export function createParticles(options: ParticlesOptions) {
       vy[i] = Math.sin(a) * initialSpeed;
     }
 
-    // Create GL batches on first render when gl is available
-    game.on("render", ({ gl }: any) => {
-      if (!gl || !img || batches.length > 0) return;
-      const perBatch = Math.min(
-        options.count,
-        options.count < 50000 ? options.count : 100000
-      );
-      let created = 0;
-      while (created < count) {
-        const take = Math.min(perBatch, count - created);
-        const glBatch = gl.getOrCreateBatch(img, take);
-        glBatch.count = take;
-        // Pre-fill sizes and uvs (constant)
-        for (let i = 0; i < take; i++) {
-          glBatch.sizes[i * 2 + 0] = spriteWidth;
-          glBatch.sizes[i * 2 + 1] = spriteHeight;
-          glBatch.uvs[i * 4 + 0] = 0;
-          glBatch.uvs[i * 4 + 1] = 0;
-          glBatch.uvs[i * 4 + 2] = 1;
-          glBatch.uvs[i * 4 + 3] = 1;
+    // Wire physics and render hooks here for robustness
+    game.on("physics", (dt: number) => updatePhysics(dt));
+    game.on("render", ({ gl, viewRect }: any) => {
+      if (!gl) return;
+      // Create batches once when image becomes available
+      if (img && batches.length === 0) {
+        const perBatch = Math.min(
+          options.count,
+          options.count < 50000 ? options.count : 100000
+        );
+        let created = 0;
+        while (created < count) {
+          const take = Math.min(perBatch, count - created);
+          const glBatch = gl.getOrCreateBatch(img, take);
+          glBatch.uploadSizesAndUVs = false; // static size/uv
+          glBatch.count = take;
+          for (let i = 0; i < take; i++) {
+            glBatch.sizes[i * 2 + 0] = spriteWidth;
+            glBatch.sizes[i * 2 + 1] = spriteHeight;
+            glBatch.uvs[i * 4 + 0] = 0;
+            glBatch.uvs[i * 4 + 1] = 0;
+            glBatch.uvs[i * 4 + 2] = 1;
+            glBatch.uvs[i * 4 + 3] = 1;
+          }
+          batches.push({
+            capacity: take,
+            start: created,
+            end: created + take,
+            glBatch,
+          });
+          created += take;
         }
-        batches.push({
-          capacity: take,
-          start: created,
-          end: created + take,
-          glBatch,
-        });
-        created += take;
       }
+      if (batches.length === 0 || !viewRect) return;
+      const vx0 = viewRect.x;
+      const vy0 = viewRect.y;
+      const vw = viewRect.width;
+      const vh = viewRect.height;
+      let visible = 0;
+      for (let b = 0; b < batches.length; b++) {
+        const batch = batches[b];
+        const gb = batch.glBatch;
+        const start = batch.start;
+        const end = batch.end;
+        const n = end - start;
+        let write = 0;
+        for (let i = 0; i < n; i++) {
+          const x = px[start + i];
+          const y = py[start + i];
+          if (
+            x + spriteWidth > vx0 &&
+            x < vx0 + vw &&
+            y + spriteHeight > vy0 &&
+            y < vy0 + vh
+          ) {
+            gb.translations[write * 2 + 0] = x - vx0;
+            gb.translations[write * 2 + 1] = y - vy0;
+            write++;
+          }
+        }
+        gb.count = write;
+        visible += write;
+      }
+      lastVisibleCount = visible;
     });
   }
 
@@ -92,25 +128,14 @@ export function createParticles(options: ParticlesOptions) {
     }
   }
 
-  function hook(game: any) {
-    game.on("physics", (dt: number) => updatePhysics(dt));
-    game.on("render", ({ gl, cache }: any) => {
-      if (!gl || batches.length === 0) return;
-      // Copy positions into instance buffers per batch (view-space handled by core)
-      for (let b = 0; b < batches.length; b++) {
-        const batch = batches[b];
-        const gb = batch.glBatch;
-        const start = batch.start;
-        const end = batch.end;
-        const n = end - start;
-        gb.count = n;
-        for (let i = 0; i < n; i++) {
-          gb.translations[i * 2 + 0] = px[start + i];
-          gb.translations[i * 2 + 1] = py[start + i];
-        }
-      }
-    });
+  function hook(_game: any) {
+    // no-op (wired in start)
   }
 
-  return { start, update: (_dt: number) => {}, hook };
+  return {
+    start,
+    update: (_dt: number) => {},
+    hook,
+    getVisibleCount: () => lastVisibleCount,
+  };
 }

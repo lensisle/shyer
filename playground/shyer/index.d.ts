@@ -398,7 +398,8 @@ interface ParticlesOptions {
 declare function createParticles(options: ParticlesOptions): {
     start: (game: any, cacheRef: any) => void;
     update: (_dt: number) => void;
-    hook: (game: any) => void;
+    hook: (_game: any) => void;
+    getVisibleCount: () => number;
 };
 
 type particles_ParticlesOptions = ParticlesOptions;

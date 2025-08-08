@@ -18,6 +18,8 @@ export interface SpriteBatch {
   translations: Float32Array;
   sizes: Float32Array;
   uvs: Float32Array; // u0 v0 u1 v1 per instance
+  // If false, renderer will not re-upload size/uv every frame (good for particles)
+  uploadSizesAndUVs?: boolean;
   push: (sprite: SpriteInstance) => void;
   clear: () => void;
 }
@@ -46,6 +48,7 @@ export function createWebGLSpriteBatchRenderer(
   let uvsVBO: WebGLBuffer | null = null;
   let uProjectionLoc: WebGLUniformLocation | null = null;
   let uSamplerLoc: WebGLUniformLocation | null = null;
+  let uViewScaleLoc: WebGLUniformLocation | null = null;
   let projection: Float32Array | null = null;
   const batches: SpriteBatch[] = [];
   let clearColor: [number, number, number, number] = options.clearColor ?? [
@@ -85,26 +88,6 @@ export function createWebGLSpriteBatchRenderer(
     if (!gl) throw new Error("WebGL2 not supported");
 
     initGL();
-
-    // Subscribe to render loop
-    game.on("render", () => {
-      if (!gl || !canvasGL) return;
-      resizeToDisplaySize(canvasGL, gl);
-      // Update orthographic projection when size changes
-      projection = ortho(0, canvasGL.width, canvasGL.height, 0, -1, 1);
-      gl.viewport(0, 0, canvasGL.width, canvasGL.height);
-      gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.useProgram(program);
-      gl.uniformMatrix4fv(uProjectionLoc, false, projection);
-
-      gl.bindVertexArray(vao);
-      for (let i = 0; i < batches.length; i++) drawBatch(batches[i]);
-      gl.bindVertexArray(null);
-      gl.useProgram(null);
-      // clear batch counts for next frame
-      for (let i = 0; i < batches.length; i++) batches[i].clear();
-    });
   }
 
   function initGL() {
@@ -112,6 +95,7 @@ export function createWebGLSpriteBatchRenderer(
     program = createProgram(gl, VERT_SRC, FRAG_SRC);
     uProjectionLoc = gl.getUniformLocation(program!, "u_projection");
     uSamplerLoc = gl.getUniformLocation(program!, "u_sampler");
+    uViewScaleLoc = gl.getUniformLocation(program!, "u_viewScale");
 
     // blending for sprites
     gl.enable(gl.BLEND);
@@ -219,6 +203,7 @@ export function createWebGLSpriteBatchRenderer(
       translations,
       sizes,
       uvs,
+      uploadSizesAndUVs: true,
       push(sprite: SpriteInstance) {
         if (this.count >= this.capacity) return;
         const i = this.count;
@@ -313,23 +298,41 @@ export function createWebGLSpriteBatchRenderer(
 
     // upload instance data
     glctx.bindBuffer(glctx.ARRAY_BUFFER, translationsVBO);
+    // orphan and update
     glctx.bufferData(
       glctx.ARRAY_BUFFER,
-      batch.translations.subarray(0, batch.count * 2),
+      batch.count * 2 * 4,
       glctx.DYNAMIC_DRAW
     );
-    glctx.bindBuffer(glctx.ARRAY_BUFFER, sizesVBO);
-    glctx.bufferData(
+    glctx.bufferSubData(
       glctx.ARRAY_BUFFER,
-      batch.sizes.subarray(0, batch.count * 2),
-      glctx.DYNAMIC_DRAW
+      0,
+      batch.translations.subarray(0, batch.count * 2)
     );
-    glctx.bindBuffer(glctx.ARRAY_BUFFER, uvsVBO);
-    glctx.bufferData(
-      glctx.ARRAY_BUFFER,
-      batch.uvs.subarray(0, batch.count * 4),
-      glctx.DYNAMIC_DRAW
-    );
+    if (batch.uploadSizesAndUVs !== false) {
+      glctx.bindBuffer(glctx.ARRAY_BUFFER, sizesVBO);
+      glctx.bufferData(
+        glctx.ARRAY_BUFFER,
+        batch.count * 2 * 4,
+        glctx.DYNAMIC_DRAW
+      );
+      glctx.bufferSubData(
+        glctx.ARRAY_BUFFER,
+        0,
+        batch.sizes.subarray(0, batch.count * 2)
+      );
+      glctx.bindBuffer(glctx.ARRAY_BUFFER, uvsVBO);
+      glctx.bufferData(
+        glctx.ARRAY_BUFFER,
+        batch.count * 4 * 4,
+        glctx.DYNAMIC_DRAW
+      );
+      glctx.bufferSubData(
+        glctx.ARRAY_BUFFER,
+        0,
+        batch.uvs.subarray(0, batch.count * 4)
+      );
+    }
 
     glctx.drawElementsInstanced(
       glctx.TRIANGLES,
@@ -338,6 +341,31 @@ export function createWebGLSpriteBatchRenderer(
       0,
       batch.count
     );
+  }
+
+  function beginFrame() {
+    if (!gl || !canvasGL) return;
+    resizeToDisplaySize(canvasGL, gl);
+    projection = ortho(0, canvasGL.width, canvasGL.height, 0, -1, 1);
+    gl.viewport(0, 0, canvasGL.width, canvasGL.height);
+    gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+    gl.uniformMatrix4fv(uProjectionLoc, false, projection);
+    const scaleX = viewRect ? canvasGL.width / Math.max(1, viewRect.width) : 1;
+    const scaleY = viewRect
+      ? canvasGL.height / Math.max(1, viewRect.height)
+      : 1;
+    gl.uniform2f(uViewScaleLoc, scaleX, scaleY);
+    gl.bindVertexArray(vao);
+  }
+
+  function flush() {
+    if (!gl) return;
+    for (let i = 0; i < batches.length; i++) drawBatch(batches[i]);
+    gl.bindVertexArray(null);
+    gl.useProgram(null);
+    for (let i = 0; i < batches.length; i++) batches[i].clear();
   }
 
   function dispose() {
@@ -362,6 +390,8 @@ export function createWebGLSpriteBatchRenderer(
     pushSprite,
     setViewRect,
     setClearColor,
+    beginFrame,
+    flush,
     dispose,
   };
 }
@@ -455,14 +485,14 @@ layout(location=3) in vec2 i_size;
 layout(location=4) in vec4 i_uvRect;
 
 uniform mat4 u_projection;
+uniform vec2 u_viewScale; // pixels per view unit
 
 out vec2 v_uv;
 
 void main() {
   vec2 world = i_translation + a_position * i_size;
-  // Convert from pixel space to NDC using the projection
-  gl_Position = u_projection * vec4(world, 0.0, 1.0);
-  // map quad uv [0..1] into rect uv
+  vec2 scaled = world * u_viewScale;
+  gl_Position = u_projection * vec4(scaled, 0.0, 1.0);
   v_uv = mix(i_uvRect.xy, i_uvRect.zw, a_uv);
 }
 `;

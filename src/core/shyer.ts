@@ -91,7 +91,8 @@ export function createGame(width: number, height: number): Game {
   // WebGL renderer as main renderer
   const glRenderer = createWebGLSpriteBatchRenderer({
     clearColor: [0, 0, 0, 0],
-    sortInstancesByY: true,
+    // Sorting costs CPU every frame; disable by default for perf
+    sortInstancesByY: false,
   });
   let viewRect: { x: number; y: number; width: number; height: number } = {
     x: 0,
@@ -182,8 +183,21 @@ export function createGame(width: number, height: number): Game {
     width: number;
     height: number;
   }): string[] {
-    // TEMP: disable spatial culling to validate rendering path
-    return entitiesKeys.slice();
+    // Re-enable spatial culling
+    const cellMinX = Math.floor(rect.x / spatialCellSize);
+    const cellMinY = Math.floor(rect.y / spatialCellSize);
+    const cellMaxX = Math.floor((rect.x + rect.width) / spatialCellSize);
+    const cellMaxY = Math.floor((rect.y + rect.height) / spatialCellSize);
+    const resultSet = new Set<string>();
+    for (let cy = cellMinY; cy <= cellMaxY; cy++) {
+      for (let cx = cellMinX; cx <= cellMaxX; cx++) {
+        const set = grid.get(cellKey(cx, cy));
+        if (!set) continue;
+        for (const id of set) resultSet.add(id);
+      }
+    }
+    if (resultSet.size === 0) return entitiesKeys.slice();
+    return Array.from(resultSet);
   }
 
   (cache as any).default = new Image();
@@ -227,14 +241,87 @@ export function createGame(width: number, height: number): Game {
     const proxies: Entity[] = [];
     targets.forEach((entity) => {
       const { id } = entity;
-      // Initialize occupancy
-      const visible = (entity as any).visible !== false;
-      const x = (entity as any).x ?? 0;
-      const y = (entity as any).y ?? 0;
-      const w = (entity as any).width ?? 0;
-      const h = (entity as any).height ?? 0;
-      if (visible && w > 0 && h > 0)
-        insertToGrid(id, aabbToCells(x - w / 2, y - h / 2, w, h));
+      // Install reactive transform props so grid updates even if user mutates the original object
+      (function setupReactiveTransform(target: any, entId: string) {
+        let bx = target.x ?? 0;
+        let by = target.y ?? 0;
+        let bw = target.width ?? 0;
+        let bh = target.height ?? 0;
+        let bvis = target.visible !== false;
+        const recompute = (
+          px: number,
+          py: number,
+          pw: number,
+          ph: number,
+          pvis: boolean,
+          nx: number,
+          ny: number,
+          nw: number,
+          nh: number,
+          nvis: boolean
+        ) => {
+          const had = pvis && pw > 0 && ph > 0;
+          const have = nvis && nw > 0 && nh > 0;
+          if (had && !have) {
+            removeFromGrid(entId);
+          } else if (!had && have) {
+            insertToGrid(entId, aabbToCells(nx, ny, nw, nh));
+          } else if (had && have) {
+            updateInGrid(entId, aabbToCells(nx, ny, nw, nh));
+          }
+        };
+        const define = (prop: "x" | "y" | "width" | "height" | "visible") => {
+          const desc: any = {
+            configurable: true,
+            enumerable: true,
+          };
+          if (prop === "visible") {
+            desc.get = () => bvis;
+            desc.set = (v: any) => {
+              const pv = bvis;
+              bvis = !!v;
+              recompute(bx, by, bw, bh, pv, bx, by, bw, bh, bvis);
+            };
+          } else if (prop === "x") {
+            desc.get = () => bx;
+            desc.set = (v: any) => {
+              const px0 = bx;
+              bx = Number(v) || 0;
+              recompute(px0, by, bw, bh, bvis, bx, by, bw, bh, bvis);
+            };
+          } else if (prop === "y") {
+            desc.get = () => by;
+            desc.set = (v: any) => {
+              const py0 = by;
+              by = Number(v) || 0;
+              recompute(bx, py0, bw, bh, bvis, bx, by, bw, bh, bvis);
+            };
+          } else if (prop === "width") {
+            desc.get = () => bw;
+            desc.set = (v: any) => {
+              const pw0 = bw;
+              bw = Math.max(0, Number(v) || 0);
+              recompute(bx, by, pw0, bh, bvis, bx, by, bw, bh, bvis);
+            };
+          } else if (prop === "height") {
+            desc.get = () => bh;
+            desc.set = (v: any) => {
+              const ph0 = bh;
+              bh = Math.max(0, Number(v) || 0);
+              recompute(bx, by, bw, ph0, bvis, bx, by, bw, bh, bvis);
+            };
+          }
+          Object.defineProperty(target, prop, desc);
+        };
+        define("x");
+        define("y");
+        define("width");
+        define("height");
+        define("visible");
+        // Initialize occupancy with current values
+        if (bvis && bw > 0 && bh > 0)
+          insertToGrid(entId, aabbToCells(bx, by, bw, bh));
+      })(entity as any, id);
 
       const proxy = new Proxy(entity, {
         set(target, prop: string | symbol, value) {
@@ -246,32 +333,8 @@ export function createGame(width: number, height: number): Game {
             p === "height" ||
             p === "visible"
           ) {
-            const prevVisible = (target as any).visible !== false;
-            const prevX = (target as any).x ?? 0;
-            const prevY = (target as any).y ?? 0;
-            const prevW = (target as any).width ?? 0;
-            const prevH = (target as any).height ?? 0;
+            // Delegate to reactive descriptor setter installed above
             (target as any)[p] = value as any;
-            const nextVisible = (target as any).visible !== false;
-            const nextX = (target as any).x ?? 0;
-            const nextY = (target as any).y ?? 0;
-            const nextW = (target as any).width ?? 0;
-            const nextH = (target as any).height ?? 0;
-            const had = prevVisible && prevW > 0 && prevH > 0;
-            const have = nextVisible && nextW > 0 && nextH > 0;
-            if (had && !have) {
-              removeFromGrid(id);
-            } else if (!had && have) {
-              insertToGrid(
-                id,
-                aabbToCells(nextX - nextW / 2, nextY - nextH / 2, nextW, nextH)
-              );
-            } else if (had && have) {
-              updateInGrid(
-                id,
-                aabbToCells(nextX - nextW / 2, nextY - nextH / 2, nextW, nextH)
-              );
-            }
             return true;
           }
           (target as any)[p] = value as any;
@@ -567,8 +630,14 @@ export function createGame(width: number, height: number): Game {
       }
     }
 
-    // Allow user code to participate; GL draws after subscribers (appended last in start)
-    emit(RENDER_EVT, { ctx: gameCtx, cache: cacheObj, gl: glRenderer });
+    // Allow user code to participate before we flush GL
+    emit(RENDER_EVT, {
+      ctx: gameCtx,
+      cache: cacheObj,
+      gl: glRenderer,
+      viewRect,
+    });
+    (glRenderer as any).flush?.();
   };
 
   function gameLoop() {
